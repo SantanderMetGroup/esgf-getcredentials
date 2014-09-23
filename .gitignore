@@ -1,0 +1,25 @@
+#################################
+# Files that git should ignore. #
+#################################
+
+# ignore all target directories
+target/
+
+# ignore all files ending with ~
+*~ 
+
+# eclipse specific git ignore
+*.pydevproject
+.project
+.metadata
+bin/**
+tmp/**
+tmp/**/*
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.classpath
+.settings/
+.loadpath
