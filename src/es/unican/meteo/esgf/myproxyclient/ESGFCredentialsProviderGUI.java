@@ -28,7 +28,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
-public class MyProxyServiceClientUI extends JFrame {
+public class ESGFCredentialsProviderGUI extends JFrame {
 
 	private static String[] nodes = { "esgf-index1.ceda.ac.uk", "pcmdi9.llnl.gov",
 		"esgf-node.ipsl.fr", "esgf-data.dkrz.de", "data.unican.meteo.es",
@@ -43,7 +43,7 @@ public class MyProxyServiceClientUI extends JFrame {
 	private JTextField userField;
 	private JPasswordField passField;
 
-	public MyProxyServiceClientUI(ESGFCredentialsProvider credentialsProvider)
+	public ESGFCredentialsProviderGUI(ESGFCredentialsProvider credentialsProvider)
 			throws HeadlessException {
 		super("ESGF MyProxy service client");
 		
@@ -391,6 +391,6 @@ public class MyProxyServiceClientUI extends JFrame {
 
 	public static void main(String args[]) {
 		ESGFCredentialsProvider credentialsProvider=ESGFCredentialsProvider.getInstance();
-		MyProxyServiceClientUI ui=new MyProxyServiceClientUI(credentialsProvider);
+		ESGFCredentialsProviderGUI ui=new ESGFCredentialsProviderGUI(credentialsProvider);
 	}
 }
