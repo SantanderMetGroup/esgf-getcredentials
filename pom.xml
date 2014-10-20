@@ -59,11 +59,11 @@
 	  <version>1.45</version>
     </dependency>
     
-     <dependency>
+    <!--<dependency>
 	  <groupId>edu.uiuc.ncsa.myproxy</groupId>
 	  <artifactId>myproxy-logon</artifactId>
 	  <version>1.4.6</version>
-    </dependency>       
+    </dependency> --> 
     
      <dependency>
 	  <groupId>org.jglobus</groupId>
