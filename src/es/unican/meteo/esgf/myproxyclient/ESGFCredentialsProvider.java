@@ -172,6 +172,8 @@ public class ESGFCredentialsProvider {
 		openID = null;
 		esgfCredentials = null;
 		myProxyLib = Lib.MYPROXYLOGON;// default lib for myproxy
+		// set java property to use TLSv1 only
+		System.setProperty("https.protocols", "TLSv1");
 
 		logger.trace("[OUT] ESGFCredentialsProvider");
 	}

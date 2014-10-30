@@ -33,7 +33,7 @@ public class ESGFCredentialsProviderGUI extends JFrame {
 
 	private static String[] nodes = { "esgf-index1.ceda.ac.uk",
 			"pcmdi9.llnl.gov", "esgf-node.ipsl.fr", "esgf-data.dkrz.de",
-			"data.unican.meteo.es", "esgdata.gfdl.noaa.gov", "dev.esg.anl.gov",
+			"data.meteo.unican.es", "esgdata.gfdl.noaa.gov", "dev.esg.anl.gov",
 			"esg.bnu.edu.cn", "adm07.cmcc.it", "euclipse1.dkrz.de",
 			"esgf.nccs.nasa.gov", "esg-datanode.jpl.nasa.gov",
 			"esg2.nci.org.au", "esg01.nersc.gov", "esg.ccs.ornl.gov" };
