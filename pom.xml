@@ -29,7 +29,7 @@
               <goal>shade</goal>
             </goals>
             <configuration>
-            <minimizeJar>true</minimizeJar>    
+            <minimizeJar>false</minimizeJar>    
              <filters>
                <filter>
                  <artifact>*:*</artifact>
@@ -42,7 +42,7 @@
               </filters>
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <mainClass>es.unican.meteo.esgf.myproxyclient.MyProxyServiceClientUI</mainClass>
+                  <mainClass>es.unican.meteo.esgf.myproxyclient.ESGFCredentialsProviderGUI</mainClass>
                 </transformer>
               </transformers>
             </configuration>

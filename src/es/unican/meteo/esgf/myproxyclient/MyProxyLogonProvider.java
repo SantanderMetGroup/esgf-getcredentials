@@ -1,6 +1,5 @@
 package es.unican.meteo.esgf.myproxyclient;
 
-import java.io.File;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.PrivateKey;
@@ -81,6 +80,7 @@ public class MyProxyLogonProvider implements MyProxyProvider {
 		myProxyLogon.setHost(myProxyParams.getHost());
 		myProxyLogon.setPort(myProxyParams.getPort());
 		myProxyLogon.setLifetime(myProxyParams.getLifetime());
+		myProxyLogon.setBootstrap(bootstrap);
 		myProxyLogon.requestTrustRoots(true); // always true
 
 		LOG.debug("MyProxyLogon generated:{}", myProxyParams.toString());
@@ -88,51 +88,4 @@ public class MyProxyLogonProvider implements MyProxyProvider {
 		return myProxyLogon;
 	}
 
-	/**
-	 * Genarate a random path that not exists. My proxy logon only do bootstrap
-	 * when: <code><pre>
-	 * IF env. variable X509_CERT_DIR is configured THEN
-	 *    IF its value (path) exits THEN
-	 *       use certificates of value of env. var X509_CERT_DIR (path)
-	 *    ELSE
-	 *       do bootstrap!!
-	 *    FI
-	 * ELSE IF property X509_CERT_DIR is configured 
-	 *    IF its value exits (path) THEN
-	 *       use certificates of value of property X509_CERT_DIR (path)
-	 *    ELSE
-	 *       do bootstrap!!
-	 *    FI
-	 * ELSE IF $HOME/.globus/certificates folder exists THEN
-	 *    use certificates of .globus/certificates
-	 * ELSE IF /etc/grid-security/certificates folder exists) THEN
-	 *    use certificates of .globus/certificates
-	 * ELSE
-	 *    do bootstrap!!
-	 * FI
-	 * </pre></code>
-	 * 
-	 * 
-	 * @return a random path that not exists
-	 */
-	private String generateRandomPathThatNotExists() {
-
-		// BigInteger bigInteger = new BigInteger(130, 90, new SecureRandom());
-		// System.out.println(bigInteger.toString());
-		// return bigInteger.toString() + ".txt";
-
-		File file = new File("pru3333");
-		try {
-			file.createNewFile();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		if (!file.isDirectory()) {
-			System.out.println("NO JOROBESSSS!!");
-		}
-
-		return file.getAbsolutePath();
-	}
 }

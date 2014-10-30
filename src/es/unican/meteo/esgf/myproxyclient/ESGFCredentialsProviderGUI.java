@@ -392,9 +392,13 @@ public class ESGFCredentialsProviderGUI extends JFrame {
 				} else if (source == rbMyProxyLogon) {
 					credentialsProvider
 							.setMyProxyLib(ESGFCredentialsProvider.Lib.MYPROXYLOGON);
+					chkBootstrap.setSelected(false);
+					chkBootstrap.setEnabled(true);
 				} else if (source == rbMyProxy206) {
-					credentialsProvider
+					credentialsProvider // always bootstrap
 							.setMyProxyLib(ESGFCredentialsProvider.Lib.MYPROXYV206);
+					chkBootstrap.setSelected(true);
+					chkBootstrap.setEnabled(false);
 				}
 			}
 		};

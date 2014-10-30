@@ -96,6 +96,7 @@ public class MyProxyLogon {
 	protected String[] trustrootFilenames;
 	protected String[] trustrootData;
 	KeyManagerFactory keyManagerFactory;
+	private boolean bootstrap;
 
 	public MyProxyLogon() {
 		if (this.host == null) {
@@ -106,6 +107,7 @@ public class MyProxyLogon {
 			this.port = Integer.parseInt(str);
 		}
 		this.username = System.getProperty("user.name");
+		this.bootstrap = false;
 	}
 
 	public String getHost() {
@@ -465,15 +467,32 @@ public class MyProxyLogon {
 		if (str == null) {
 			str = System.getProperty("X509_CERT_DIR");
 		}
+		if (str == null) {
+			str = System.getProperty("user.home") + "/.globus/certificates";
+		}
 		return str;
 	}
 
 	public static String getExistingTrustRootPath() {
+		String str2 = System.getenv("GLOBUS_LOCATION");
+		if (str2 == null) {
+			str2 = System.getProperty("GLOBUS_LOCATION");
+		}
 		String str1 = System.getenv("X509_CERT_DIR");
 		if (str1 == null) {
 			str1 = System.getProperty("X509_CERT_DIR");
 		}
-
+		if (str1 == null) {
+			str1 = getDir(System.getProperty("user.home")
+					+ "/.globus/certificates");
+		}
+		if (str1 == null) {
+			str1 = getDir("/etc/grid-security/certificates");
+		}
+		if (str1 == null) {
+			str1 = getDir(str2 + File.separator + "share" + File.separator
+					+ "certificates");
+		}
 		return str1;
 	}
 
@@ -629,6 +648,11 @@ public class MyProxyLogon {
 
 		@Override
 		public X509Certificate[] getAcceptedIssuers() {
+
+			if (bootstrap) { // if bootstrap accept all issuers
+				return null;
+			}
+
 			X509Certificate[] arrayOfX509Certificate = null;
 			String str = MyProxyLogon.getExistingTrustRootPath();
 			if (str == null) {
@@ -689,17 +713,24 @@ public class MyProxyLogon {
 						.generateCertPath(Arrays
 								.asList(paramArrayOfX509Certificate));
 				X509Certificate[] arrayOfX509Certificate = getAcceptedIssuers();
+				// if getAcceptedIssuers == null then bootstrap server
 				if (arrayOfX509Certificate == null) {
-					String localObject = MyProxyLogon
-							.getExistingTrustRootPath();
-					if (localObject != null) {
-						throw new CertificateException(
-								"no CA certificates found in " + localObject);
+
+					if (!bootstrap) { // only do this check if bootstarp option
+										// isn't active
+						String localObject = MyProxyLogon
+								.getExistingTrustRootPath();
+						if (localObject != null) {
+							throw new CertificateException(
+									"no CA certificates found in "
+											+ localObject);
+						}
+						if (!MyProxyLogon.this.requestTrustRoots) {
+							throw new CertificateException(
+									"no CA certificates directory found");
+						}
 					}
-					if (!MyProxyLogon.this.requestTrustRoots) {
-						throw new CertificateException(
-								"no CA certificates directory found");
-					}
+
 					MyProxyLogon.logger
 							.info("no trusted CAs configured -- bootstrapping trust from MyProxy server");
 					arrayOfX509Certificate = new X509Certificate[1];
@@ -769,10 +800,13 @@ public class MyProxyLogon {
 		private State() {
 		}
 	}
-}
 
-/*
- * Location: /home/terryk/Workspaces/workESGF/ESGFToolsUI/lib/MyProxyLogon.jar
- * Qualified Name: edu.uiuc.ncsa.MyProxy.MyProxyLogon Java Class Version: 6
- * (50.0) JD-Core Version: 0.7.0.1
- */
+	/**
+	 * Configure MyProxy request to do bootstrap
+	 * 
+	 * @param bootstrap
+	 */
+	public void setBootstrap(boolean bootstrap) {
+		this.bootstrap = bootstrap;
+	}
+}
