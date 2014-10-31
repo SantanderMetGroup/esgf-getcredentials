@@ -1,11 +1,14 @@
 package es.unican.meteo.esgf.myproxyclient;
 
+
 /**
- * Parameters to configure MyProxy for retrieving credentials from a MyProxy server. 
- * @author Karem Terry 
+ * Parameters to configure MyProxy for retrieving credentials from a MyProxy
+ * server.
+ * 
+ * @author Karem Terry
  *
  */
-public class MyProxyParameters{
+public class MyProxyParameters {
 
 	private String userName;
 	private String password;
@@ -16,6 +19,7 @@ public class MyProxyParameters{
 
 	/**
 	 * Constructor
+	 * 
 	 * @param userName
 	 * @param password
 	 * @param host
@@ -34,116 +38,127 @@ public class MyProxyParameters{
 		this.requestTrustRoots = requestTrustRoots;
 	}
 
-
 	/**
 	 * Gets the MyProxy username.
+	 * 
 	 * @return the MyProxy userName
 	 */
 	public String getUserName() {
 		return userName;
 	}
 
-
 	/**
 	 * Gets the MyProxy password.
+	 * 
 	 * @return the MyProxy password
 	 */
 	public String getPassword() {
 		return password;
 	}
 
-
 	/**
 	 * Gets the hostname of the MyProxy server.
+	 * 
 	 * @return MyProxy server hostname
 	 */
 	public String getHost() {
 		return host;
 	}
 
-
 	/**
 	 * Gets the port of the MyProxy server.
+	 * 
 	 * @return MyProxy server port
 	 */
 	public int getPort() {
 		return port;
 	}
 
-
 	/**
 	 * Gets the requested credential lifetime.
+	 * 
 	 * @return Credential lifetime
 	 */
 	public int getLifetime() {
 		return lifetime;
 	}
 
-
 	/**
-	 * Gets whether to request trust roots (CA certificates, CRLs, signing policy files) from the MyProxy server
-	 * @return the  If true, request trust roots. If false, don't request trust roots.
+	 * Gets whether to request trust roots (CA certificates, CRLs, signing
+	 * policy files) from the MyProxy server
+	 * 
+	 * @return the If true, request trust roots. If false, don't request trust
+	 *         roots.
 	 */
 	public boolean isRequestTrustRoots() {
 		return requestTrustRoots;
 	}
 
-
 	/**
 	 * Sets the MyProxy username.
-	 * @param userName the userName to set
+	 * 
+	 * @param userName
+	 *            the userName to set
 	 */
 	public void setUserName(String userName) {
 		this.userName = userName;
 	}
 
-
 	/**
 	 * Sets the MyProxy password.
-	 * @param password the password to set
+	 * 
+	 * @param password
+	 *            the password to set
 	 */
 	public void setPassword(String password) {
 		this.password = password;
 	}
 
-
 	/**
 	 * Sets the hostname of the MyProxy server. Defaults to localhost.
-	 * @param host MyProxy server hostname
+	 * 
+	 * @param host
+	 *            MyProxy server hostname
 	 */
 	public void setHost(String host) {
 		this.host = host;
 	}
 
-
 	/**
 	 * Sets the port of the MyProxy server.
-	 * @param MyProxy server port
+	 * 
+	 * @param MyProxy
+	 *            server port
 	 */
 	public void setPort(int port) {
 		this.port = port;
 	}
 
-
 	/**
 	 * Sets the requested credential lifetime.
-	 * @param lifetime  Credential lifetime
+	 * 
+	 * @param lifetime
+	 *            Credential lifetime
 	 */
 	public void setLifetime(int lifetime) {
 		this.lifetime = lifetime;
 	}
 
-
 	/**
-	 * Sets whether to request trust roots (CA certificates, CRLs, signing policy files) from the MyProxy server.
-	 * @param requestTrustRoots  If true, request trust roots. If false, don't request trust roots.
+	 * Sets whether to request trust roots (CA certificates, CRLs, signing
+	 * policy files) from the MyProxy server.
+	 * 
+	 * @param requestTrustRoots
+	 *            If true, request trust roots. If false, don't request trust
+	 *            roots.
 	 */
 	public void setRequestTrustRoots(boolean requestTrustRoots) {
 		this.requestTrustRoots = requestTrustRoots;
 	}
-	
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
@@ -154,6 +169,4 @@ public class MyProxyParameters{
 				+ requestTrustRoots + "]";
 	}
 
-	
-	
 }

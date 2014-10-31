@@ -108,5 +108,4 @@ public class ESGFCredentials {
 
 		return certificates;
 	}
-
 }
