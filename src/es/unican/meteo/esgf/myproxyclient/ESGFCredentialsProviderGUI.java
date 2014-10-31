@@ -139,6 +139,7 @@ public class ESGFCredentialsProviderGUI extends JFrame {
 		final JCheckBox chkTruststore = new JCheckBox("esgf-truststore");
 		final JCheckBox chkCerts = new JCheckBox("certificates");
 		final JCheckBox chkCacerts = new JCheckBox("ca-certs.pem");
+		chkCacerts.setEnabled(false);
 
 		// Checkboxes listener
 		ItemListener writeOptionsListener = new ItemListener() {
@@ -159,6 +160,14 @@ public class ESGFCredentialsProviderGUI extends JFrame {
 				} else if (source == chkCerts) {
 					credentialsProvider.setWriteTrustRootsCerts(source
 							.isSelected());
+					// cacerts only can be generated if certificates are
+					// retrieved
+					if (source.isSelected()) {
+						chkCacerts.setEnabled(true);
+					} else {
+						chkCacerts.setEnabled(false);
+						chkCacerts.setSelected(false);
+					}
 				} else if (source == chkCacerts) {
 					credentialsProvider.setWriteCaCertsPem(source.isSelected());
 				}
