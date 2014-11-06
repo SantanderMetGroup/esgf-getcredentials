@@ -38,8 +38,8 @@ import javax.xml.xpath.XPathFactory;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
+import es.unican.meteo.esgf.myproxyclient.MyProxyLogon;
 import sun.misc.BASE64Encoder;
-import MyProxy.MyProxyLogon;
 
 public class RetrieveKeystore {
 

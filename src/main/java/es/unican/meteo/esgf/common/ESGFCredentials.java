@@ -6,7 +6,8 @@ import java.util.Collection;
 import java.util.LinkedList;
 
 /**
- * ESGF credentials
+ * ESGF credentials. Contains the temporal x509 user certificate, the temporal
+ * user RSA private key, and may content x509 server certificates.
  * 
  * @author Karem Terry
  *

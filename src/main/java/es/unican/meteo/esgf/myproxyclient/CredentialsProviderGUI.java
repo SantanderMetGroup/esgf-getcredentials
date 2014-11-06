@@ -29,7 +29,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
-public class ESGFCredentialsProviderGUI extends JFrame {
+public class CredentialsProviderGUI extends JFrame {
 
 	private static String[] nodes = { "esgf-index1.ceda.ac.uk",
 			"pcmdi9.llnl.gov", "esgf-node.ipsl.fr", "esgf-data.dkrz.de",
@@ -37,15 +37,15 @@ public class ESGFCredentialsProviderGUI extends JFrame {
 			"esg.bnu.edu.cn", "adm07.cmcc.it", "euclipse1.dkrz.de",
 			"esgf.nccs.nasa.gov", "esg-datanode.jpl.nasa.gov",
 			"esg2.nci.org.au", "esg01.nersc.gov", "esg.ccs.ornl.gov" };
-	private ESGFCredentialsProvider credentialsProvider;
+	private CredentialsProvider credentialsProvider;
 	private JButton btRetrieve;
 	private JTextArea txaMessages;
 	private JComboBox idpCombo;
 	private JTextField userField;
 	private JPasswordField passField;
 
-	public ESGFCredentialsProviderGUI(
-			ESGFCredentialsProvider credentialsProvider)
+	public CredentialsProviderGUI(
+			CredentialsProvider credentialsProvider)
 			throws HeadlessException {
 		super("ESGF MyProxy service client");
 
@@ -88,12 +88,12 @@ public class ESGFCredentialsProviderGUI extends JFrame {
 
 						if (idpCombo.getSelectedItem().equals(
 								"<< Custom OpenID URL >>")) {
-							credentialsProvider.initialize(user, password);
+							credentialsProvider.setOpenID(user, password);
 						} else {
 							String completeOpenID = "https://"
 									+ idpCombo.getSelectedItem()
 									+ "/esgf-idp/openid/" + user;
-							credentialsProvider.initialize(completeOpenID,
+							credentialsProvider.setOpenID(completeOpenID,
 									password);
 						}
 
@@ -400,12 +400,12 @@ public class ESGFCredentialsProviderGUI extends JFrame {
 					btChangeCredFol.setEnabled(true);
 				} else if (source == rbMyProxyLogon) {
 					credentialsProvider
-							.setMyProxyLib(ESGFCredentialsProvider.Lib.MYPROXYLOGON);
+							.setMyProxyLib(CredentialsProvider.Lib.MYPROXYLOGON);
 					chkBootstrap.setSelected(false);
 					chkBootstrap.setEnabled(true);
 				} else if (source == rbMyProxy206) {
 					credentialsProvider // always bootstrap
-							.setMyProxyLib(ESGFCredentialsProvider.Lib.MYPROXYV206);
+							.setMyProxyLib(CredentialsProvider.Lib.MYPROXYV206);
 					chkBootstrap.setSelected(true);
 					chkBootstrap.setEnabled(false);
 				}
@@ -428,9 +428,9 @@ public class ESGFCredentialsProviderGUI extends JFrame {
 	}
 
 	public static void main(String args[]) {
-		ESGFCredentialsProvider credentialsProvider = ESGFCredentialsProvider
+		CredentialsProvider credentialsProvider = CredentialsProvider
 				.getInstance();
-		ESGFCredentialsProviderGUI ui = new ESGFCredentialsProviderGUI(
+		CredentialsProviderGUI ui = new CredentialsProviderGUI(
 				credentialsProvider);
 	}
 }

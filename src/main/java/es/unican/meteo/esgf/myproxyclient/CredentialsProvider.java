@@ -62,15 +62,63 @@ import es.unican.meteo.esgf.util.PemUtil;
 import es.unican.meteo.esgf.util.StoreUtil;
 
 /**
- * Singleton class.
+ * This class allows retrieve user credentials from ESGF. Also can write this
+ * credentials in a file system in different forms. The default behavior is not
+ * bootstrap the certificates and not write files. Singleton class.
+ * 
+ * <p>
+ * For configure:
+ * </p>
+ * <ul>
+ * <li>First get the instance of the class:
+ * <ul>
+ * <li>
+ * <code> credencialsProvider = ESGFCredentialsProvider.getInstance()</code></li>
+ * </ul>
+ * </li>
+ * <li>Second, set OpenID with user OpenID URL and password:
+ * <ul>
+ * <li>
+ * <code>credentialsProvider.setOpenID(openID,password)</code></li>
+ * </ul>
+ * </li>
+ * <li>By default {@link CredentialsProvider} isn't configured for write
+ * credentials in file system. For configured it:
+ * <ul>
+ * <li>Write certificates in .pem format:
+ * <code>credentialsProvider.setWritePem(true)</code></li>
+ * <li>Write write JKS keystore file:
+ * <code>credentialsProvider.setWriteJKSKeystore(true)</code></li>
+ * <li>Write write JCEKS keystore file:
+ * <code>credentialsProvider.setWriteJCEKSKeystore(true)</code></li>
+ * <li>Write trustore in keystore format:
+ * <code>credentialsProvider.setWriteTruststore(true)</code></li>
+ * <li>Write all certificates trustroots in caDirectory:
+ * <code>credentialsProvider.setWriteTrustRootsCerts(true)</code></li>
+ * <li>Write esgf CA certificates:
+ * <code>credentialsProvider.setWriteCaCertsPem(true)</code></li>
+ * </ul>
+ * </li>
+ * </ul>
+ * 
+ * <p>
+ * Advanced settings
+ * </p>
+ * <ul>
+ * <li>Change default lib:
+ * <code>credentialsProvider.setMyProxyLib(ESGFCredentialsProvider.Lib.MYPROXYV206)</code>
+ * </li>
+ * <li>Configure bootstrap, true for bootstrapping and false otherwise:
+ * <code>credentialsProvider.setBootstrap(boolean)</code></li>
+ * </ul>
  * 
  * @author Karem Terry
  */
-public class ESGFCredentialsProvider {
+public class CredentialsProvider {
 
 	/** Logger. */
 	static private org.slf4j.Logger LOG = org.slf4j.LoggerFactory
-			.getLogger(ESGFCredentialsProvider.class);
+			.getLogger(CredentialsProvider.class);
 
 	// Constants.
 	private static final String FEDERATION_TRUSTSTORE_URL = "https://raw.github.com/ESGF/esgf-dist/master/installer/certs/esg-truststore.ts";
@@ -98,30 +146,31 @@ public class ESGFCredentialsProvider {
 	private static String esgHome;
 	/** Path of directory of trust roots certs. */
 	private String caDirectory;
-	/** State of Credentials Manager (Inititialized or not). */
-	private boolean initialized;
 	/** Singleton instance. */
-	private static ESGFCredentialsProvider INSTANCE = null;
+	private static CredentialsProvider INSTANCE = null;
 	/** OpenID account. */
 	private PasswordAuthentication openID;
 	/** ESGF Credentials. */
 	private ESGFCredentials esgfCredentials;
 	/** Boolean that indicates if bootstrapping certificates or not. */
 	private boolean bootstrap;
-	/** Boolean that indicates if write certificates in .pem format. */
+	/** Boolean, indicates if write certificates in .pem format */
 	private boolean writePem;
 	/** Boolean that indicates if write JKS keystore file. */
 	private boolean writeJKSKeystore;
 	/** Boolean that indicates if write JCEKS keystore file. */
 	private boolean writeJCEKSKeystore;
-	/** Boolean that indicates if write certificates trustroots directory. */
+	/**
+	 * Boolean that indicates if write all certificates trustroots in
+	 * caDirectory.
+	 */
 	private boolean writeTrustRootsCerts;
-	/** Boolean that indicates if write esgf trustore. */
+	/** Boolean that indicates if trustore keystore (esg-trustore.ts). */
 	private boolean writeTruststore;
-	/** Boolean that indicates if write esgf trustore. */
+	/** Boolean that indicates if write esgf CA certificates. */
 	private boolean writeCaCertsPem;
 	/** Library of MyProxyProvider. */
-	private Lib myProxyLib;
+	private Lib myProxyLib = Lib.MYPROXYLOGON;// default lib for myproxy
 
 	/**
 	 * Create a thread-safe singleton.
@@ -135,12 +184,12 @@ public class ESGFCredentialsProvider {
 
 			// Only the synchronized block is accessed when the instance hasn't
 			// been created.
-			synchronized (ESGFCredentialsProvider.class) {
+			synchronized (CredentialsProvider.class) {
 				// Inside the block it must check again that the instance has
 				// not been created.
 				if (INSTANCE == null) {
 					LOG.debug("Creating new instance of ESGFCredentialsProvider");
-					INSTANCE = new ESGFCredentialsProvider();
+					INSTANCE = new CredentialsProvider();
 				}
 			}
 		}
@@ -148,12 +197,12 @@ public class ESGFCredentialsProvider {
 	}
 
 	/**
-	 * Get singleton instance of {@link ESGFCredentialsProvider}. This instance
+	 * Get singleton instance of {@link CredentialsProvider}. This instance
 	 * is the only that exists.
 	 * 
 	 * @return the unique instance of {@link ESGFCredentialsProviders}.
 	 */
-	public static ESGFCredentialsProvider getInstance() {
+	public static CredentialsProvider getInstance() {
 		LOG.trace("[IN]  getInstance");
 		createInstance();
 		LOG.trace("[OUT] getInstance");
@@ -166,7 +215,7 @@ public class ESGFCredentialsProvider {
 	 * the ESG credentials; otherwise, the default folder (&lt;user home
 	 * folder&gt;/.esg) is used.
 	 */
-	private ESGFCredentialsProvider() {
+	private CredentialsProvider() {
 		LOG.trace("[IN]  ESGFCredentialsProvider");
 		// use ESG_HOME environmental variable if exists
 		Map<String, String> env = System.getenv();
@@ -198,39 +247,22 @@ public class ESGFCredentialsProvider {
 	}
 
 	/**
-	 * Check if ESgf Credentials Provider has been initiated.
-	 * 
-	 * @return true if is configured and otherwise false.
-	 */
-	public synchronized boolean hasInitiated() {
-		LOG.trace("[IN]  hasInitiated");
-		LOG.trace("[OUT] hasInitiated");
-		return initialized;
-	}
-
-	/**
-	 * Initialize ESGF credentials provider with an openID. If previously has
-	 * been initiated then reset all state of credential manager and
-	 * reinitialize it.
+	 * Set user openID and password.
 	 * 
 	 * @param openIDURL
 	 *            OpenID-enabled URL that can be used to log into OpenID-enabled
 	 *            websites
 	 * @param password
 	 *            OpenID password
-	 * @return MessageError String if connection failed or null is success
 	 * @throws IOException
 	 *             if some error happens getting credentials
 	 */
-	public synchronized void initialize(String openIDURL, char[] password)
+	public synchronized void setOpenID(String openIDURL, char[] password)
 			throws IOException {
-		LOG.trace("[IN]  initialize");
-
-		esgfCredentials = null;
+		LOG.trace("[IN]  setOpenID");
 		openID = new PasswordAuthentication(openIDURL, password);
-		initialized = true;
 
-		LOG.trace("[OUT] initialize");
+		LOG.trace("[OUT] setOpenID");
 	}
 
 	/**
@@ -347,14 +379,18 @@ public class ESGFCredentialsProvider {
 	}
 
 	/**
-	 * Get credentials from ESGF IdP node.
+	 * Retrieve credentials from ESGF IdP node and write all requested files in
+	 * the configurated directories.
+	 * 
+	 * @return {@link ESGFCredentials}
 	 * 
 	 * @throws Exception
 	 * 
 	 * @throws IllegalStateException
 	 *             if user openID hasn't configured
+	 * 
 	 */
-	public void retrieveCredentials() throws Exception {
+	public ESGFCredentials retrieveCredentials() throws Exception {
 		LOG.trace("[IN]  retrieveCredentials");
 
 		if (openID == null) {
@@ -382,49 +418,8 @@ public class ESGFCredentialsProvider {
 			this.esgfCredentials = provider.getESGFCredentials(bootstrap,
 					myProxyParams, this.caDirectory);
 
-			FileOutputStream ous;
-			String path;
-
 			LOG.debug("Writting requested files..");
-			if (writePem) {
-				path = esgHome + File.separator + CREDENTIALS_FILE_PEM;
-				ous = new FileOutputStream(new File(path));
-				PemUtil.writeCredentials(ous,
-						esgfCredentials.getAllx509Certificates(),
-						esgfCredentials.getPrivateKey());
-				LOG.info("Pem file has been written in {}", path);
-			}
-			if (writeJKSKeystore) {
-				path = esgHome + File.separator + KEYSTORE_JKS_FILE;
-				ous = new FileOutputStream(new File(path));
-				KeyStore jksKeyStore = StoreUtil.generateJKSKeystore(
-						esgfCredentials.getX509userCertificate(),
-						esgfCredentials.getPrivateKey(),
-						esgfCredentials.getX509ServerCertificates(),
-						KEYSTORE_PASSWORD);
-				jksKeyStore.store(ous, KEYSTORE_PASSWORD.toCharArray());
-				LOG.info("JKS keystore has been written in {}", path);
-			}
-			if (writeJCEKSKeystore) {
-				path = esgHome + File.separator + KEYSTORE_JCEKS_FILE;
-				ous = new FileOutputStream(new File(path));
-				KeyStore jceksKeyStore = StoreUtil.generateJCEKSKeystore(
-						esgfCredentials.getX509userCertificate(),
-						esgfCredentials.getPrivateKey(),
-						esgfCredentials.getX509ServerCertificates(),
-						KEYSTORE_PASSWORD);
-				jceksKeyStore.store(ous, KEYSTORE_PASSWORD.toCharArray());
-				LOG.info("JCEKS keystore has been written in {}", path);
-			}
-			if (writeCaCertsPem) {
-				path = esgHome + File.separator + CAS_CERTIFICATES_PEM;
-				ous = new FileOutputStream(new File(path));
-				PemUtil.writeCACertificate(new FileOutputStream(path),
-						getCaDirectoryPath());
-				LOG.info(
-						"Ca's certificates in pem format have been written in {}",
-						path);
-			}
+			writeRequestedFilesFromESGFCredentials(esgfCredentials);
 
 		} catch (GeneralSecurityException e) {
 			LOG.error("Error in retrieve credentials:{} " + e.getMessage());
@@ -437,6 +432,59 @@ public class ESGFCredentialsProvider {
 		}
 
 		LOG.trace("[OUT] retrieveCredentials");
+		return esgfCredentials;
+
+	}
+
+	/**
+	 * Private method. Write the requested files in file system.
+	 */
+	private void writeRequestedFilesFromESGFCredentials(
+			ESGFCredentials esgfCredentials) throws IllegalStateException,
+			IOException, GeneralSecurityException {
+
+		FileOutputStream ous;
+		String path;
+
+		if (writePem) {
+			path = esgHome + File.separator + CREDENTIALS_FILE_PEM;
+			ous = new FileOutputStream(new File(path));
+			PemUtil.writeCredentials(ous,
+					esgfCredentials.getAllx509Certificates(),
+					esgfCredentials.getPrivateKey());
+			LOG.info("Pem file has been written in {}", path);
+		}
+		if (writeJKSKeystore) {
+			path = esgHome + File.separator + KEYSTORE_JKS_FILE;
+			ous = new FileOutputStream(new File(path));
+			KeyStore jksKeyStore = StoreUtil.generateJKSKeystore(
+					esgfCredentials.getX509userCertificate(),
+					esgfCredentials.getPrivateKey(),
+					esgfCredentials.getX509ServerCertificates(),
+					KEYSTORE_PASSWORD);
+			jksKeyStore.store(ous, KEYSTORE_PASSWORD.toCharArray());
+			LOG.info("JKS keystore has been written in {}", path);
+		}
+		if (writeJCEKSKeystore) {
+			path = esgHome + File.separator + KEYSTORE_JCEKS_FILE;
+			ous = new FileOutputStream(new File(path));
+			KeyStore jceksKeyStore = StoreUtil.generateJCEKSKeystore(
+					esgfCredentials.getX509userCertificate(),
+					esgfCredentials.getPrivateKey(),
+					esgfCredentials.getX509ServerCertificates(),
+					KEYSTORE_PASSWORD);
+			jceksKeyStore.store(ous, KEYSTORE_PASSWORD.toCharArray());
+			LOG.info("JCEKS keystore has been written in {}", path);
+		}
+		if (writeCaCertsPem) {
+			path = esgHome + File.separator + CAS_CERTIFICATES_PEM;
+			ous = new FileOutputStream(new File(path));
+			PemUtil.writeCACertificate(new FileOutputStream(path),
+					getCaDirectoryPath());
+			LOG.info("Ca's certificates in pem format have been written in {}",
+					path);
+		}
+
 	}
 
 	/**
@@ -536,7 +584,7 @@ public class ESGFCredentialsProvider {
 	}
 
 	/**
-	 * Set if truststore will be written in a file.
+	 * Set if truststore keystore will be written in a file (esgf-trustore.ts).
 	 * 
 	 * @param flag
 	 */
