@@ -4,13 +4,18 @@
 package es.unican.meteo.esgf.myproxyclient;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.PasswordAuthentication;
@@ -18,12 +23,17 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -59,7 +69,7 @@ import es.unican.meteo.esgf.util.StoreUtil;
 public class ESGFCredentialsProvider {
 
 	/** Logger. */
-	static private org.slf4j.Logger logger = org.slf4j.LoggerFactory
+	static private org.slf4j.Logger LOG = org.slf4j.LoggerFactory
 			.getLogger(ESGFCredentialsProvider.class);
 
 	// Constants.
@@ -117,9 +127,9 @@ public class ESGFCredentialsProvider {
 	 * Create a thread-safe singleton.
 	 */
 	private static void createInstance() {
-		logger.trace("[IN]  createInstance");
+		LOG.trace("[IN]  createInstance");
 
-		logger.debug("Checking if exist an instance of ESGFCredentialsProvider");
+		LOG.debug("Checking if exist an instance of ESGFCredentialsProvider");
 		// creating a thread-safe singleton
 		if (INSTANCE == null) {
 
@@ -129,12 +139,12 @@ public class ESGFCredentialsProvider {
 				// Inside the block it must check again that the instance has
 				// not been created.
 				if (INSTANCE == null) {
-					logger.debug("Creating new instance of ESGFCredentialsProvider");
+					LOG.debug("Creating new instance of ESGFCredentialsProvider");
 					INSTANCE = new ESGFCredentialsProvider();
 				}
 			}
 		}
-		logger.trace("[OUT] createInstance");
+		LOG.trace("[OUT] createInstance");
 	}
 
 	/**
@@ -144,9 +154,9 @@ public class ESGFCredentialsProvider {
 	 * @return the unique instance of {@link ESGFCredentialsProviders}.
 	 */
 	public static ESGFCredentialsProvider getInstance() {
-		logger.trace("[IN]  getInstance");
+		LOG.trace("[IN]  getInstance");
 		createInstance();
-		logger.trace("[OUT] getInstance");
+		LOG.trace("[OUT] getInstance");
 		return INSTANCE;
 	}
 
@@ -157,7 +167,7 @@ public class ESGFCredentialsProvider {
 	 * folder&gt;/.esg) is used.
 	 */
 	private ESGFCredentialsProvider() {
-		logger.trace("[IN]  ESGFCredentialsProvider");
+		LOG.trace("[IN]  ESGFCredentialsProvider");
 		// use ESG_HOME environmental variable if exists
 		Map<String, String> env = System.getenv();
 		if (env.containsKey(ESG_HOME_ENV_VAR)) {
@@ -175,7 +185,7 @@ public class ESGFCredentialsProvider {
 		// set java property to use TLSv1 only
 		System.setProperty("https.protocols", "TLSv1");
 
-		logger.trace("[OUT] ESGFCredentialsProvider");
+		LOG.trace("[OUT] ESGFCredentialsProvider");
 	}
 
 	/**
@@ -193,8 +203,8 @@ public class ESGFCredentialsProvider {
 	 * @return true if is configured and otherwise false.
 	 */
 	public synchronized boolean hasInitiated() {
-		logger.trace("[IN]  hasInitiated");
-		logger.trace("[OUT] hasInitiated");
+		LOG.trace("[IN]  hasInitiated");
+		LOG.trace("[OUT] hasInitiated");
 		return initialized;
 	}
 
@@ -214,13 +224,13 @@ public class ESGFCredentialsProvider {
 	 */
 	public synchronized void initialize(String openIDURL, char[] password)
 			throws IOException {
-		logger.trace("[IN]  initialize");
+		LOG.trace("[IN]  initialize");
 
 		esgfCredentials = null;
 		openID = new PasswordAuthentication(openIDURL, password);
 		initialized = true;
 
-		logger.trace("[OUT] initialize");
+		LOG.trace("[OUT] initialize");
 	}
 
 	/**
@@ -345,10 +355,10 @@ public class ESGFCredentialsProvider {
 	 *             if user openID hasn't configured
 	 */
 	public void retrieveCredentials() throws Exception {
-		logger.trace("[IN]  retrieveCredentials");
+		LOG.trace("[IN]  retrieveCredentials");
 
 		if (openID == null) {
-			logger.error("IllegalStateException. User openID hasn't configured");
+			LOG.error("IllegalStateException. User openID hasn't configured");
 			throw new IllegalStateException("User openID hasn't configured");
 		}
 
@@ -359,13 +369,13 @@ public class ESGFCredentialsProvider {
 			esgDirectory.setExecutable(true);
 			esgDirectory.setReadable(true);
 			esgDirectory.setWritable(true);
-			logger.debug(".esg is created");
+			LOG.debug(".esg is created");
 		}
 
-		logger.debug("Getting CA's certificates from {}...", ESGF_CA_CERTS_URL);
+		LOG.debug("Getting CA's certificates from {}...", ESGF_CA_CERTS_URL);
 		getCASCertificates();
 
-		logger.debug("Getting openID info...");
+		LOG.debug("Getting openID info...");
 		MyProxyParameters myProxyParams = getMyProxyParametersFromOpenID();
 		MyProxyProvider provider = getMyProxyProvider();
 		try {
@@ -375,14 +385,14 @@ public class ESGFCredentialsProvider {
 			FileOutputStream ous;
 			String path;
 
-			logger.debug("Writting requested files..");
+			LOG.debug("Writting requested files..");
 			if (writePem) {
 				path = esgHome + File.separator + CREDENTIALS_FILE_PEM;
 				ous = new FileOutputStream(new File(path));
 				PemUtil.writeCredentials(ous,
 						esgfCredentials.getAllx509Certificates(),
 						esgfCredentials.getPrivateKey());
-				logger.info("Pem file has been written in {}", path);
+				LOG.info("Pem file has been written in {}", path);
 			}
 			if (writeJKSKeystore) {
 				path = esgHome + File.separator + KEYSTORE_JKS_FILE;
@@ -393,7 +403,7 @@ public class ESGFCredentialsProvider {
 						esgfCredentials.getX509ServerCertificates(),
 						KEYSTORE_PASSWORD);
 				jksKeyStore.store(ous, KEYSTORE_PASSWORD.toCharArray());
-				logger.info("JKS keystore has been written in {}", path);
+				LOG.info("JKS keystore has been written in {}", path);
 			}
 			if (writeJCEKSKeystore) {
 				path = esgHome + File.separator + KEYSTORE_JCEKS_FILE;
@@ -404,29 +414,29 @@ public class ESGFCredentialsProvider {
 						esgfCredentials.getX509ServerCertificates(),
 						KEYSTORE_PASSWORD);
 				jceksKeyStore.store(ous, KEYSTORE_PASSWORD.toCharArray());
-				logger.info("JCEKS keystore has been written in {}", path);
+				LOG.info("JCEKS keystore has been written in {}", path);
 			}
 			if (writeCaCertsPem) {
 				path = esgHome + File.separator + CAS_CERTIFICATES_PEM;
 				ous = new FileOutputStream(new File(path));
 				PemUtil.writeCACertificate(new FileOutputStream(path),
 						getCaDirectoryPath());
-				logger.info(
+				LOG.info(
 						"Ca's certificates in pem format have been written in {}",
 						path);
 			}
 
 		} catch (GeneralSecurityException e) {
-			logger.error("Error in retrieve credentials:{} " + e.getMessage());
+			LOG.error("Error in retrieve credentials:{} " + e.getMessage());
 			esgfCredentials = null;
 			throw e;
 		} catch (IOException e) {
-			logger.error("Error in retrieve credentials:{} " + e.getMessage());
+			LOG.error("Error in retrieve credentials:{} " + e.getMessage());
 			esgfCredentials = null;
 			throw e;
 		}
 
-		logger.trace("[OUT] retrieveCredentials");
+		LOG.trace("[OUT] retrieveCredentials");
 	}
 
 	/**
@@ -544,16 +554,89 @@ public class ESGFCredentialsProvider {
 	private MyProxyParameters getMyProxyParametersFromOpenID()
 			throws IOException, GeneralSecurityException {
 
-		logger.debug("Getting connection with OpenID");
-		String openIdURLStr = openID.getUserName();
-		HttpURLConnection openIdConnection = getSecureConnection(openIdURLStr);
-		openIdConnection.connect();
+		LOG.debug("Getting connection with OpenID");
+		String openIdURLStr = openID.getUserName(); // get OpenID URL
+		URL url = new URL(openIdURLStr);
+		InputStream localInputStream = null;
 
-		// read openId XML document
-		InputStream localInputStream = openIdConnection.getInputStream();
+		try {
+			HttpURLConnection openIdConnection = getSecureConnection(openIdURLStr);
+			openIdConnection.connect();
+			// read openId XML document
+			localInputStream = openIdConnection.getInputStream();
+		} catch (SSLHandshakeException e) {
+			LOG.warn("SSLHandshakeException, removing SSLv3 and SSLv2Hello protocols");
+			try {
+
+				SSLSocketFactory sslSocketFactory = (SSLSocketFactory) SSLSocketFactory
+						.getDefault();
+				SSLSocket sslSocket = (SSLSocket) sslSocketFactory
+						.createSocket(url.getHost(), 443);
+
+				// Strip "SSLv3" from the current enabled protocols.
+				String[] protocols = sslSocket.getEnabledProtocols();
+				Set<String> set = new HashSet<String>();
+				for (String s : protocols) {
+					if (s.equals("SSLv3") || s.equals("SSLv2Hello")) {
+						continue;
+					}
+					set.add(s);
+				}
+				sslSocket.setEnabledProtocols(set.toArray(new String[0]));
+
+				// get openID xml
+				PrintWriter out = new PrintWriter(new OutputStreamWriter(
+						sslSocket.getOutputStream()));
+				out.println("GET " + url.toString() + " HTTP/1.1");
+				out.println();
+				out.flush();
+
+				// read openid url content
+				InputStream in = sslSocket.getInputStream();
+				final BufferedReader reader = new BufferedReader(
+						new InputStreamReader(in));
+
+				// read headers
+				boolean head = true;
+				int headLen = 0;
+				int contentLen = 0;
+				String line = null;
+				line = reader.readLine();
+
+				while (head == true & line != null) {
+					if (head) {
+						headLen = headLen + line.length();
+						if (line.trim().equals("")) {
+							head = false;
+						} else {
+							String[] headers = line.trim().split(" ");
+							if (headers[0].equals("Content-Length:")) {
+								contentLen = Integer.parseInt(headers[1]);
+							}
+							line = reader.readLine();
+						}
+					}
+				}
+
+				// read content
+				char[] buffContent = new char[contentLen];
+				reader.read(buffContent);
+				reader.close();
+
+				// make inpuStream for the content
+				String content = new String(buffContent);
+				localInputStream = new ByteArrayInputStream(content.getBytes());
+
+			} catch (Exception e1) {
+				System.err.println("Can't parse OpenID: " + e.getMessage());
+			}
+		}
 
 		Document localDocument;
 		try {
+			if (localInputStream == null) {
+				throw new IOException("OpenID couldn't be read. Null value");
+			}
 			localDocument = DocumentBuilderFactory.newInstance()
 					.newDocumentBuilder().parse(localInputStream);
 
@@ -564,9 +647,9 @@ public class ESGFCredentialsProvider {
 			TransformerFactory tf = TransformerFactory.newInstance();
 			Transformer transformer = tf.newTransformer();
 			transformer.transform(domSource, result);
-			logger.debug("OpenID XML: \n" + writer.toString());
+			LOG.debug("OpenID XML: \n" + writer.toString());
 
-			logger.debug("Getting my proxy service from OpenId XML");
+			LOG.debug("Getting my proxy service from OpenId XML");
 			// Get myproxy-service section in xml
 			XPath localXPath = XPathFactory.newInstance().newXPath();
 			XPathExpression localXPathExpression = localXPath
@@ -615,30 +698,30 @@ public class ESGFCredentialsProvider {
 	private HttpsURLConnection getSecureConnection(String openIdURLStr)
 			throws IOException, GeneralSecurityException {
 
-		logger.trace("[IN]  getSecureConnection");
+		LOG.trace("[IN]  getSecureConnection");
 
 		SSLContext context = null;
 		HttpsURLConnection secureConnection = null;
 
-		logger.debug("Creating new httpsUrlConnection to access openId info");
+		LOG.debug("Creating new httpsUrlConnection to access openId info");
 		// New HttpsURLConnection
 		URL secureUrl = new URL(openIdURLStr);
 		URLConnection sslConnection = secureUrl.openConnection();
 		secureConnection = (HttpsURLConnection) sslConnection;
 
-		logger.debug("Generating truststore factory...");
+		LOG.debug("Generating truststore factory...");
 		KeyStore truststore = retrieveESGFTrustStore();
 		TrustManagerFactory tmf = TrustManagerFactory
 				.getInstance(TrustManagerFactory.getDefaultAlgorithm());
 		tmf.init(truststore);
 
-		logger.debug("Generating SSL context with truststore factory...");
+		LOG.debug("Generating SSL context with truststore factory...");
 		context = SSLContext.getInstance(SSLCONTEXT);
 		context.init(null, tmf.getTrustManagers(), null);
 		secureConnection.setSSLSocketFactory(context.getSocketFactory());
-		logger.debug("Secure openIdConnection (with ssl context) is generated");
+		LOG.debug("Secure openIdConnection (with ssl context) is generated");
 
-		logger.trace("[OUT] getSecureConnection");
+		LOG.trace("[OUT] getSecureConnection");
 		return secureConnection;
 	}
 
@@ -655,11 +738,64 @@ public class ESGFCredentialsProvider {
 		}
 	}
 
+	/**
+	 * Retrieve CA's from ESGF URL. If fails try use the CA's in caDirectory if
+	 * this directory exists and isn't empty
+	 * 
+	 * @throws IOException
+	 *             If CA's can't be retrieved from ESGF. If the retrieval fails
+	 *             this exception is raised when CA's can' be loaded from
+	 *             caDirectory because CA's directory is empty or isn't exists"
+	 * @throws ArchiveException
+	 *             If CA's retrieved can't be write in file system
+	 */
 	private void getCASCertificates() throws IOException, ArchiveException {
-		URL url = new URL(ESGF_CA_CERTS_URL);
-		URLConnection connection = url.openConnection();
-		InputStream is = connection.getInputStream();
-		writeCAsCertificates(is);
+
+		boolean caRetrieved = false;
+		InputStream is = null;
+
+		try {
+			URL url = new URL(ESGF_CA_CERTS_URL);
+			URLConnection connection;
+			connection = url.openConnection();
+			is = connection.getInputStream();
+			caRetrieved = true;
+		} catch (IOException e) {
+			LOG.warn("CA's certificates can't be retrieved");
+		}
+
+		// if is success
+		if (caRetrieved) {
+			try {
+				writeCAsCertificates(is);
+			} catch (IOException e) {
+				throw e;
+			} catch (ArchiveException e) {
+				throw e;
+			}
+		} else { // if CA's can't be retrieved check if exists CA's
+					// previously download in caDirectory
+			File caDirectory = new File(this.caDirectory);
+			if (!caDirectory.exists() | caDirectory.isDirectory()) {
+				LOG.error("CA's can't be retrieved from {} and can't"
+						+ " be loaded from {} in file system",
+						ESGF_CA_CERTS_URL, caDirectory);
+				throw new IOException("CA's can't be retrieved from "
+						+ ESGF_CA_CERTS_URL + "and can't be loaded from"
+						+ caDirectory + " in file system");
+			}
+
+			if (caDirectory.listFiles().length < 1) {
+				LOG.error("CA's can't be retrieved from {} and can't"
+						+ " be loaded from {} in file system"
+						+ " because CA's directory is empty",
+						ESGF_CA_CERTS_URL, caDirectory);
+				throw new IOException("CA's can't be retrieved from "
+						+ ESGF_CA_CERTS_URL + "and can't be loaded from"
+						+ caDirectory + " in file system because CA's"
+						+ " directory is empty");
+			}
+		}
 	}
 
 	private void writeCAsCertificates(InputStream in) throws IOException,
@@ -686,6 +822,10 @@ public class ESGFCredentialsProvider {
 		File caDirectory = new File(this.caDirectory);
 		if (!caDirectory.exists()) {
 			caDirectory.mkdir();
+		} else {
+			// if exists CAdirectory delete it and its content
+			deleteFolder(caDirectory);
+			caDirectory.mkdir(); // create new directory
 		}
 
 		for (File cert : certs) {
@@ -698,6 +838,23 @@ public class ESGFCredentialsProvider {
 				outputFileStream.close();
 			}
 		}
+	}
+
+	/**
+	 * Delete folder and its content
+	 */
+	private void deleteFolder(File folder) {
+		File[] files = folder.listFiles();
+		if (files != null) { // some JVMs return null for empty dirs
+			for (File f : files) {
+				if (f.isDirectory()) {
+					deleteFolder(f);
+				} else {
+					f.delete();
+				}
+			}
+		}
+		folder.delete();
 	}
 
 	/**
@@ -718,7 +875,7 @@ public class ESGFCredentialsProvider {
 	private static List<File> unTar(final File inputFile, final File outputDir)
 			throws FileNotFoundException, IOException, ArchiveException {
 
-		logger.debug(String.format("Untaring %s to dir %s.",
+		LOG.debug(String.format("Untaring %s to dir %s.",
 				inputFile.getAbsolutePath(), outputDir.getAbsolutePath()));
 
 		final List<File> untaredFiles = new LinkedList<File>();
@@ -729,11 +886,11 @@ public class ESGFCredentialsProvider {
 		while ((entry = (TarArchiveEntry) debInputStream.getNextEntry()) != null) {
 			final File outputFile = new File(outputDir, entry.getName());
 			if (entry.isDirectory()) {
-				logger.debug(String.format(
+				LOG.debug(String.format(
 						"Attempting to write output directory %s.",
 						outputFile.getAbsolutePath()));
 				if (!outputFile.exists()) {
-					logger.info(String.format(
+					LOG.info(String.format(
 							"Attempting to create output directory %s.",
 							outputFile.getAbsolutePath()));
 					if (!outputFile.mkdirs()) {
@@ -743,7 +900,7 @@ public class ESGFCredentialsProvider {
 					}
 				}
 			} else {
-				logger.debug(String.format("Creating output file %s.",
+				LOG.debug(String.format("Creating output file %s.",
 						outputFile.getAbsolutePath()));
 				final OutputStream outputFileStream = new FileOutputStream(
 						outputFile);

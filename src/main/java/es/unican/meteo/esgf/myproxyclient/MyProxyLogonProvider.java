@@ -8,7 +8,6 @@ import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.Iterator;
 
-import MyProxy.MyProxyLogon;
 import es.unican.meteo.esgf.common.ESGFCredentials;
 
 public class MyProxyLogonProvider implements MyProxyProvider {
