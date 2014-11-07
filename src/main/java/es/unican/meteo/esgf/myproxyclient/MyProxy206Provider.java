@@ -9,7 +9,6 @@ import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.LinkedList;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.globus.myproxy.GetParams;
 import org.globus.myproxy.MyProxy;
 import org.globus.myproxy.MyProxyException;
@@ -23,32 +22,37 @@ import es.unican.meteo.esgf.util.PemUtil;
 public class MyProxy206Provider implements MyProxyProvider {
 
 	/** Logger. */
-	static private org.slf4j.Logger logger = org.slf4j.LoggerFactory
+	static private org.slf4j.Logger LOG = org.slf4j.LoggerFactory
 			.getLogger(MyProxy206Provider.class);
 
-	public ESGFCredentials getESGFCredentials(MyProxyParameters myProxyParams,
-			String caDirectory) throws IOException, GeneralSecurityException {
+	public ESGFCredentials getESGFCredentials(boolean bootstrap,
+			MyProxyParameters myProxyParams, String caDirectory)
+			throws IOException, GeneralSecurityException {
 
-		// Configurate system
+		LOG.debug("Configuring X509_CERT_DIR and security providers...");
+		// Clear value of X509_CERT_DIR
 		System.clearProperty("X509_CERT_DIR");
-		System.setProperty("X509_CERT_DIR", caDirectory + File.separator
-				+ "tempCerts");
-
+		// Set new value in X509_CERT_DIR property
+		if (bootstrap) {
+			System.setProperty("X509_CERT_DIR", caDirectory + File.separator
+					+ "tempCerts");
+		} else {
+			System.setProperty("X509_CERT_DIR", caDirectory);
+		}
 		// Add java security provider
-		Security.addProvider(new BouncyCastleProvider());
+		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 		// for console debugging
 		// System.setProperty("javax.net.debug", "ssl");
-		// ------------------------------------------------------------------
 
-		logger.debug("Getting GSSCredentials from MyProxy service...");
+		LOG.debug("Getting GSSCredentials from MyProxy service...");
 		GSSCredential credential;
 		try {
-			credential = getConnection(myProxyParams, caDirectory);
+			credential = getConnection(bootstrap, myProxyParams, caDirectory);
 			byte[] data = ((ExtendedGSSCredential) credential)
 					.export(ExtendedGSSCredential.IMPEXP_OPAQUE);
 			String pem = new String(data);
 
-			logger.debug("Generaring ESGF credentials..");
+			LOG.debug("Generaring ESGF credentials..");
 			// get user certificate and other certificates
 			X509Certificate[] certificates = PemUtil.getX509Certificates(pem);
 			X509Certificate userCert = certificates[0];
@@ -70,14 +74,14 @@ public class MyProxy206Provider implements MyProxyProvider {
 	}
 
 	/**
-	 * Configure {@link MyProxyLogon}
+	 * Configure {@link MyProxy}
 	 * 
 	 * @throws MyProxyException
 	 * @throws IOException
 	 */
-	private GSSCredential getConnection(MyProxyParameters myProxyParams,
-			String caDirectory) throws MyProxyException, IOException {
-		logger.trace("[IN]  getConnection");
+	private GSSCredential getConnection(boolean bootstrap,
+			MyProxyParameters myProxyParams, String caDirectory)
+			throws MyProxyException, IOException {
 
 		String host = myProxyParams.getHost();
 		int port = myProxyParams.getPort();
@@ -89,19 +93,20 @@ public class MyProxy206Provider implements MyProxyProvider {
 		params.setWantTrustroots(myProxyParams.isRequestTrustRoots());
 		params.setLifetime(myProxyParams.getLifetime());
 		MyProxy myProxy = new MyProxy(host, port);
-		myProxy.bootstrapTrust();
-		logger.debug("New myProxy object generated with parameters: {}, {}",
+		if (bootstrap) {
+			myProxy.bootstrapTrust();
+		}
+		LOG.debug("New myProxy object generated with parameters: {}, {}",
 				params, "host:" + host + ", port:" + port);
 
-		logger.debug("Retrieving credentials from the MyProxy server..");
+		LOG.debug("Retrieving credentials from the MyProxy server..");
 		GSSCredential credential = myProxy.get(null, params);
 
 		if (myProxyParams.isRequestTrustRoots()) {
-			logger.info("Writing trust roots to {}", caDirectory);
+			LOG.info("Writing trust roots to {}", caDirectory);
 			myProxy.writeTrustRoots(caDirectory);
 		}
 
-		logger.trace("[OUT]  getConnection");
 		return credential;
 	}
 
