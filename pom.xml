@@ -4,7 +4,7 @@
 	<groupId>getESGFCredentials</groupId>
 	<artifactId>getESGFCredentials</artifactId>
 	<packaging>jar</packaging>
-	<version>0.0.1</version>
+	<version>0.0.2</version>
 	<name>getESGFCredentials</name>
 
 	<build>
@@ -22,12 +22,16 @@
 				<artifactId>maven-shade-plugin</artifactId>
 				<version>2.1</version>
 				<executions>
+
+					<!-- Jar with two libraries -->
 					<execution>
+						<id>build-getESGFCredentialsMultLib</id>
 						<phase>package</phase>
 						<goals>
 							<goal>shade</goal>
 						</goals>
 						<configuration>
+							<finalName>getESGFCredentialsMultLib-${project.version}</finalName>
 							<minimizeJar>true</minimizeJar>
 							<filters>
 								<filter>
@@ -47,6 +51,85 @@
 									<includes>
 										<include>**</include>
 									</includes>
+								</filter>
+								<filter>
+									<artifact>*:*</artifact>
+									<excludes>
+										<exclude>META-INF/*.SF</exclude>
+										<exclude>META-INF/*.DSA</exclude>
+										<exclude>META-INF/*.RSA</exclude>
+									</excludes>
+								</filter>
+							</filters>
+							<transformers>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+									<mainClass>es.unican.meteo.esgf.myproxyclient.CredentialsProviderGUI</mainClass>
+								</transformer>
+							</transformers>
+						</configuration>
+					</execution>
+
+					<!-- Jar with one library. MyproxyLogon lib -->
+					<execution>
+						<id>build-getESGFCredentials</id>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+
+							<finalName>getESGFCredentials-${project.version}</finalName>
+
+							<artifactSet>
+								<excludes>
+									<exclude>org.jglobus:myproxy</exclude>
+									<exclude>org.jglobus:gss</exclude>
+									<exclude>org.jglobus:jsse</exclude>
+									<exclude>org.jglobus:ssl-proxies</exclude>
+									<exclude>commons-logging:commons-logging</exclude>
+									<exclude>commons-io:commons-io</exclude>
+								</excludes>
+							</artifactSet>
+
+							<minimizeJar>true</minimizeJar>
+
+							<filters>
+								<filter>
+									<artifact>org.bouncycastle:bcprov-jdk16</artifact>
+									<excludes>
+										<exclude>org/bouncycastle/crypto/**</exclude>
+										<exclude>org/bouncycastle/math/**</exclude>
+										<exclude>org/bouncycastle/x509/**</exclude>
+										<exclude>org/bouncycastle/asn1/bc/**</exclude>
+										<exclude>org/bouncycastle/asn1/iana/**</exclude>
+										<exclude>org/bouncycastle/asn1/isismtt/**</exclude>
+										<exclude>org/bouncycastle/asn1/misc/**</exclude>
+										<exclude>org/bouncycastle/asn1/sec/**</exclude>
+										<exclude>org/bouncycastle/asn1/util/**</exclude>
+										<exclude>org/bouncycastle/jce/exception/**</exclude>
+										<exclude>org/bouncycastle/jce/interfaces/**</exclude>
+										<exclude>org/bouncycastle/jce/provider/**</exclude>
+										<exclude>org/bouncycastle/jce/spec/**</exclude>
+										<exclude>org/bouncycastle/jce/ECGOST3410NamedCurveTable**</exclude>
+										<exclude>org/bouncycastle/jce/PrincipalUtil**</exclude>
+										<exclude>org/bouncycastle/jce/ProviderConfigurationPermission**</exclude>
+										<exclude>org/bouncycastle/jce/X509LDAP**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/Att**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/B**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/C**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/D**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/G**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/H**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/I**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/K**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/N**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/O**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/P**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/R**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/T**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/V**</exclude>
+									</excludes>
 								</filter>
 								<filter>
 									<artifact>*:*</artifact>

@@ -197,8 +197,8 @@ public class CredentialsProvider {
 	}
 
 	/**
-	 * Get singleton instance of {@link CredentialsProvider}. This instance
-	 * is the only that exists.
+	 * Get singleton instance of {@link CredentialsProvider}. This instance is
+	 * the only that exists.
 	 * 
 	 * @return the unique instance of {@link ESGFCredentialsProviders}.
 	 */
@@ -824,12 +824,12 @@ public class CredentialsProvider {
 		} else { // if CA's can't be retrieved check if exists CA's
 					// previously download in caDirectory
 			File caDirectory = new File(this.caDirectory);
-			if (!caDirectory.exists() | caDirectory.isDirectory()) {
+			if (!caDirectory.exists() | !caDirectory.isDirectory()) {
 				LOG.error("CA's can't be retrieved from {} and can't"
 						+ " be loaded from {} in file system",
 						ESGF_CA_CERTS_URL, caDirectory);
 				throw new IOException("CA's can't be retrieved from "
-						+ ESGF_CA_CERTS_URL + "and can't be loaded from"
+						+ ESGF_CA_CERTS_URL + " and can't be loaded from"
 						+ caDirectory + " in file system");
 			}
 
@@ -839,7 +839,7 @@ public class CredentialsProvider {
 						+ " because CA's directory is empty",
 						ESGF_CA_CERTS_URL, caDirectory);
 				throw new IOException("CA's can't be retrieved from "
-						+ ESGF_CA_CERTS_URL + "and can't be loaded from"
+						+ ESGF_CA_CERTS_URL + " and can't be loaded from"
 						+ caDirectory + " in file system because CA's"
 						+ " directory is empty");
 			}

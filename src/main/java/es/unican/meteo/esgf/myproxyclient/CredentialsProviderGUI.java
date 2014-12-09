@@ -44,8 +44,7 @@ public class CredentialsProviderGUI extends JFrame {
 	private JTextField userField;
 	private JPasswordField passField;
 
-	public CredentialsProviderGUI(
-			CredentialsProvider credentialsProvider)
+	public CredentialsProviderGUI(CredentialsProvider credentialsProvider)
 			throws HeadlessException {
 		super("ESGF MyProxy service client");
 
@@ -225,6 +224,15 @@ public class CredentialsProviderGUI extends JFrame {
 	 * @return
 	 */
 	private JPanel generateIdPanel() {
+
+		boolean multLibraries = false;
+		try {
+			this.getClass().getClassLoader()
+					.loadClass("org.globus.myproxy.MyProxy");
+			multLibraries = true;
+		} catch (ClassNotFoundException e) {
+		}
+
 		JPanel idPanel = new JPanel(new BorderLayout());
 		final JPanel introPanel = new JPanel(new GridBagLayout());
 
@@ -351,21 +359,79 @@ public class CredentialsProviderGUI extends JFrame {
 
 		// Options of MyProxy Lib in idpPanel
 		JPanel idLibOptsPanel = new JPanel(new GridLayout(4, 1));
-		final JRadioButton rbMyProxyLogon = new JRadioButton(
-				"use MyProxyLogon lib (v-1.0)");
-		rbMyProxyLogon.setSelected(true);
-		final JRadioButton rbMyProxy206 = new JRadioButton(
-				"use MyProxy lib (v-2.0.6)");
-		final ButtonGroup myProxyGroup = new ButtonGroup(); // radio button
-															// group
-		myProxyGroup.add(rbMyProxyLogon);
-		myProxyGroup.add(rbMyProxy206);
-		idLibOptsPanel.add(rbMyProxyLogon);
-		idLibOptsPanel.add(rbMyProxy206);
-		idLibOptsPanel.add(new JLabel(" "));
-		idLibOptsPanel.add(chkBootstrap);
-		idLibOptsPanel.setBorder(BorderFactory
-				.createTitledBorder("Select lib:"));
+		if (multLibraries) {
+			final JRadioButton rbMyProxyLogon = new JRadioButton(
+					"use MyProxyLogon lib (v-1.0)");
+			rbMyProxyLogon.setSelected(true);
+
+			final JRadioButton rbMyProxy206 = new JRadioButton(
+					"use MyProxy lib (v-2.0.6)");
+			final ButtonGroup myProxyGroup = new ButtonGroup(); // radio button
+																// group
+			myProxyGroup.add(rbMyProxyLogon);
+			myProxyGroup.add(rbMyProxy206);
+			idLibOptsPanel.add(rbMyProxyLogon);
+			idLibOptsPanel.add(rbMyProxy206);
+			idLibOptsPanel.add(new JLabel(" "));
+			idLibOptsPanel.add(chkBootstrap);
+			idLibOptsPanel.setBorder(BorderFactory
+					.createTitledBorder("Select lib:"));
+
+			// opts listener
+			ActionListener optsListener = new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent paramActionEvent) {
+					JRadioButton source = (JRadioButton) paramActionEvent
+							.getSource();
+					if (source == rbEsgFol) {
+						credentialsProvider.resetCredentialsDirectory();
+						btChangeCredFol.setEnabled(false);
+						rbAnotherFol.setText("Another folder");
+					} else if (source == rbAnotherFol) {
+						btChangeCredFol.setEnabled(true);
+					} else if (source == rbMyProxyLogon) {
+						credentialsProvider
+								.setMyProxyLib(CredentialsProvider.Lib.MYPROXYLOGON);
+						chkBootstrap.setSelected(false);
+						chkBootstrap.setEnabled(true);
+					} else if (source == rbMyProxy206) {
+						credentialsProvider // always bootstrap
+								.setMyProxyLib(CredentialsProvider.Lib.MYPROXYV206);
+						chkBootstrap.setSelected(true);
+						chkBootstrap.setEnabled(false);
+					}
+				}
+			};
+
+			// addListeners to radio buttons
+			rbEsgFol.addActionListener(optsListener);
+			rbAnotherFol.addActionListener(optsListener);
+			rbMyProxyLogon.addActionListener(optsListener);
+			rbMyProxy206.addActionListener(optsListener);
+		} else {
+			idLibOptsPanel.add(chkBootstrap);
+			idLibOptsPanel.setBorder(BorderFactory
+					.createTitledBorder("Bootstrapping:"));
+
+			// opts listener
+			ActionListener optsListener = new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent paramActionEvent) {
+					JRadioButton source = (JRadioButton) paramActionEvent
+							.getSource();
+					if (source == rbEsgFol) {
+						credentialsProvider.resetCredentialsDirectory();
+						btChangeCredFol.setEnabled(false);
+						rbAnotherFol.setText("Another folder");
+					} else if (source == rbAnotherFol) {
+						btChangeCredFol.setEnabled(true);
+					}
+				}
+			};
+
+			rbEsgFol.addActionListener(optsListener);
+			rbAnotherFol.addActionListener(optsListener);
+		}
 
 		// button listener
 		btChangeCredFol.addActionListener(new ActionListener() {
@@ -386,37 +452,6 @@ public class CredentialsProviderGUI extends JFrame {
 			}
 		});
 
-		// opts listener
-		ActionListener idOptionsListener = new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent paramActionEvent) {
-				JRadioButton source = (JRadioButton) paramActionEvent
-						.getSource();
-				if (source == rbEsgFol) {
-					credentialsProvider.resetCredentialsDirectory();
-					btChangeCredFol.setEnabled(false);
-					rbAnotherFol.setText("Another folder");
-				} else if (source == rbAnotherFol) {
-					btChangeCredFol.setEnabled(true);
-				} else if (source == rbMyProxyLogon) {
-					credentialsProvider
-							.setMyProxyLib(CredentialsProvider.Lib.MYPROXYLOGON);
-					chkBootstrap.setSelected(false);
-					chkBootstrap.setEnabled(true);
-				} else if (source == rbMyProxy206) {
-					credentialsProvider // always bootstrap
-							.setMyProxyLib(CredentialsProvider.Lib.MYPROXYV206);
-					chkBootstrap.setSelected(true);
-					chkBootstrap.setEnabled(false);
-				}
-			}
-		};
-
-		// addListeners to radio buttons
-		rbEsgFol.addActionListener(idOptionsListener);
-		rbAnotherFol.addActionListener(idOptionsListener);
-		rbMyProxyLogon.addActionListener(idOptionsListener);
-		rbMyProxy206.addActionListener(idOptionsListener);
 		// panel of idp options
 		JPanel optsPanel = new JPanel(new BorderLayout());
 		optsPanel.add(idFolOptsPanel, BorderLayout.CENTER);
