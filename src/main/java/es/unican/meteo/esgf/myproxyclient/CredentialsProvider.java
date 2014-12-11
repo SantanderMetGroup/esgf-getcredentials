@@ -87,15 +87,15 @@ import es.unican.meteo.esgf.util.StoreUtil;
  * <ul>
  * <li>Write certificates in .pem format:
  * <code>credentialsProvider.setWritePem(true)</code></li>
- * <li>Write write JKS keystore file:
+ * <li>Write JKS keystore file:
  * <code>credentialsProvider.setWriteJKSKeystore(true)</code></li>
- * <li>Write write JCEKS keystore file:
+ * <li>Write JCEKS keystore file:
  * <code>credentialsProvider.setWriteJCEKSKeystore(true)</code></li>
  * <li>Write trustore in keystore format:
  * <code>credentialsProvider.setWriteTruststore(true)</code></li>
  * <li>Write all certificates trustroots in caDirectory:
  * <code>credentialsProvider.setWriteTrustRootsCerts(true)</code></li>
- * <li>Write esgf CA certificates:
+ * <li>Write esgf CA certificates in pem format:
  * <code>credentialsProvider.setWriteCaCertsPem(true)</code></li>
  * </ul>
  * </li>
@@ -575,7 +575,7 @@ public class CredentialsProvider {
 	}
 
 	/**
-	 * Sets if trustroots certificates will be written in a directory.
+	 * Sets if trustroots certificates will be written in a folder.
 	 * 
 	 * @param flag
 	 */
@@ -584,7 +584,8 @@ public class CredentialsProvider {
 	}
 
 	/**
-	 * Set if truststore keystore will be written in a file (esgf-trustore.ts).
+	 * Set if truststore of CA roots certs will be written in a file
+	 * (esgf-trustore.ts).
 	 * 
 	 * @param flag
 	 */

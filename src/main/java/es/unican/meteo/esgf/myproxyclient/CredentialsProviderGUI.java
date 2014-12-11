@@ -461,11 +461,4 @@ public class CredentialsProviderGUI extends JFrame {
 		idPanel.add(optsPanel, BorderLayout.SOUTH);
 		return idPanel;
 	}
-
-	public static void main(String args[]) {
-		CredentialsProvider credentialsProvider = CredentialsProvider
-				.getInstance();
-		CredentialsProviderGUI ui = new CredentialsProviderGUI(
-				credentialsProvider);
-	}
 }
