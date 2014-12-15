@@ -421,6 +421,14 @@ public class CredentialsProvider {
 			LOG.debug("Writting requested files..");
 			writeRequestedFilesFromESGFCredentials(esgfCredentials);
 
+			if (!writeTrustRootsCerts) { // if CAdirectory must not been written
+				File caDirectory = new File(this.caDirectory);
+				if (caDirectory.exists()) {
+					// if exists CAdirectory delete it and its content
+					deleteFolder(caDirectory);
+				}
+			}
+
 		} catch (GeneralSecurityException e) {
 			LOG.error("Error in retrieve credentials:{} " + e.getMessage());
 			esgfCredentials = null;
@@ -853,18 +861,11 @@ public class CredentialsProvider {
 		String tempPath = System.getProperty("java.io.tmpdir") + File.separator
 				+ "esg-certificates.tar";
 		File tarFile = new File(tempPath);
-		OutputStream ous = new FileOutputStream(tarFile);
-		byte[] buf = new byte[1024];
-		int len;
-		while ((len = in.read(buf)) > 0) {
-			ous.write(buf, 0, len);
-		}
-		ous.close();
-		in.close();
 
 		// untar certificates
 		String dir = System.getProperty("java.io.tmpdir") + File.separator;
 		File tempCertDir = new File(dir);
+
 		List<File> certs = unTar(tarFile, tempCertDir);
 
 		// Copy untar certs in $ESG_HOME/certificates
@@ -876,15 +877,30 @@ public class CredentialsProvider {
 			deleteFolder(caDirectory);
 			caDirectory.mkdir(); // create new directory
 		}
+		caDirectory.deleteOnExit();
 
 		for (File cert : certs) {
 			if (!cert.isDirectory()) {
-				File outputFile = new File(caDirectory, cert.getName());
-				final OutputStream outputFileStream = new FileOutputStream(
-						outputFile);
-				IOUtils.copy(new FileInputStream(cert), new FileOutputStream(
-						outputFile));
-				outputFileStream.close();
+				if (cert.getCanonicalPath() == cert.getAbsolutePath()) {
+					File outputFile = new File(caDirectory, cert.getName());
+					final OutputStream outputFileStream = new FileOutputStream(
+							outputFile);
+					IOUtils.copy(new FileInputStream(cert),
+							new FileOutputStream(outputFile));
+					outputFileStream.close();
+				} else { // symlink
+
+					String symlink = cert.getCanonicalPath();
+					File linkDest = new File(symlink);
+
+					File outputFile = new File(caDirectory, cert.getName());
+					final OutputStream outputFileStream = new FileOutputStream(
+							outputFile);
+					IOUtils.copy(new FileInputStream(linkDest),
+							new FileOutputStream(outputFile));
+					outputFileStream.close();
+
+				}
 			}
 		}
 	}
@@ -934,6 +950,7 @@ public class CredentialsProvider {
 		TarArchiveEntry entry = null;
 		while ((entry = (TarArchiveEntry) debInputStream.getNextEntry()) != null) {
 			final File outputFile = new File(outputDir, entry.getName());
+
 			if (entry.isDirectory()) {
 				LOG.debug(String.format(
 						"Attempting to write output directory %s.",
@@ -953,8 +970,20 @@ public class CredentialsProvider {
 						outputFile.getAbsolutePath()));
 				final OutputStream outputFileStream = new FileOutputStream(
 						outputFile);
-				IOUtils.copy(debInputStream, outputFileStream);
-				outputFileStream.close();
+
+				if (entry.isSymbolicLink()) {
+					String symLinkFileName = entry.getLinkName();
+
+					IOUtils.copy(
+							new FileInputStream(new File(outputFile.getParent()
+									+ File.separator + symLinkFileName)),
+							outputFileStream);
+					outputFileStream.close();
+
+				} else {
+					IOUtils.copy(debInputStream, outputFileStream);
+					outputFileStream.close();
+				}
 			}
 			untaredFiles.add(outputFile);
 		}
@@ -962,5 +991,4 @@ public class CredentialsProvider {
 
 		return untaredFiles;
 	}
-
 }
