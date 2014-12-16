@@ -23,6 +23,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -855,12 +856,21 @@ public class CredentialsProvider {
 		}
 	}
 
-	private void writeCAsCertificates(InputStream in) throws IOException,
+	private void writeCAsCertificates(InputStream is) throws IOException,
 			ArchiveException {
-		// read tar from ESGF URL
+
+		// read tar
 		String tempPath = System.getProperty("java.io.tmpdir") + File.separator
 				+ "esg-certificates.tar";
 		File tarFile = new File(tempPath);
+		OutputStream ous = new FileOutputStream(tarFile);
+		byte[] buf = new byte[1024];
+		int len;
+		while ((len = is.read(buf)) > 0) {
+			ous.write(buf, 0, len);
+		}
+		ous.close();
+		is.close();
 
 		// untar certificates
 		String dir = System.getProperty("java.io.tmpdir") + File.separator;
@@ -948,6 +958,11 @@ public class CredentialsProvider {
 		final TarArchiveInputStream debInputStream = (TarArchiveInputStream) new ArchiveStreamFactory()
 				.createArchiveInputStream("tar", is);
 		TarArchiveEntry entry = null;
+
+		// map to save the links that their orig files already hasn't been read
+		Map<String, String> linkFileMap = new HashMap<String, String>();
+		String folderPath = "";
+
 		while ((entry = (TarArchiveEntry) debInputStream.getNextEntry()) != null) {
 			final File outputFile = new File(outputDir, entry.getName());
 
@@ -955,6 +970,7 @@ public class CredentialsProvider {
 				LOG.debug(String.format(
 						"Attempting to write output directory %s.",
 						outputFile.getAbsolutePath()));
+				folderPath = outputFile.getAbsolutePath();
 				if (!outputFile.exists()) {
 					LOG.info(String.format(
 							"Attempting to create output directory %s.",
@@ -972,13 +988,23 @@ public class CredentialsProvider {
 						outputFile);
 
 				if (entry.isSymbolicLink()) {
-					String symLinkFileName = entry.getLinkName();
+					// write all symlinks as files copying the content of their
+					// orig files
+					String origFile = entry.getLinkName();
 
-					IOUtils.copy(
-							new FileInputStream(new File(outputFile.getParent()
-									+ File.separator + symLinkFileName)),
-							outputFileStream);
-					outputFileStream.close();
+					try {
+						IOUtils.copy(
+								new FileInputStream(new File(outputFile
+										.getParent()
+										+ File.separator
+										+ origFile)), outputFileStream);
+					} catch (FileNotFoundException e) {
+						// if dest file of symlink already hasn't been write
+						// add in link-file map
+						linkFileMap.put(entry.getName(), origFile);
+					} finally {
+						outputFileStream.close();
+					}
 
 				} else {
 					IOUtils.copy(debInputStream, outputFileStream);
@@ -987,6 +1013,19 @@ public class CredentialsProvider {
 			}
 			untaredFiles.add(outputFile);
 		}
+
+		// write all symlinks as files copying the content of their orig files
+		for (Map.Entry<String, String> entryMap : linkFileMap.entrySet()) {
+
+			String linkName = entryMap.getKey();
+			String origName = entryMap.getValue();
+
+			// copying origName file in a new file with linkName
+			IOUtils.copy(new FileInputStream(new File(folderPath
+					+ File.separator + origName)), new FileOutputStream(
+					new File(outputDir + File.separator + linkName)));
+		}
+
 		debInputStream.close();
 
 		return untaredFiles;
