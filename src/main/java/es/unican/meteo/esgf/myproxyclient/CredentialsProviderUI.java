@@ -56,7 +56,7 @@ public final class CredentialsProviderUI {
 			// [options]
 
 			Docopt docopt = new Docopt(doc);
-			docopt.withVersion("esgf-getcredentials 0.0.2");
+			docopt.withVersion("esgf-getcredentials 0.1");
 
 			// parse the passed arguments returns a Map<String, Object>
 			// except when --version or --help/-h options are passed
