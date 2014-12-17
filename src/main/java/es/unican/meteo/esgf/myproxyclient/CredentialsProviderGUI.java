@@ -66,6 +66,8 @@ public class CredentialsProviderGUI extends JFrame {
 		setLayout(new BorderLayout());
 		add(mainPanel, BorderLayout.CENTER);
 		add(messagePanel, BorderLayout.SOUTH);
+		
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		pack();
 		setVisible(true);
