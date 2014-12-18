@@ -1030,4 +1030,12 @@ public class CredentialsProvider {
 
 		return untaredFiles;
 	}
+
+	/**
+	 * Get OpenID URL
+	 * @return
+	 */
+	public String getOpenID() {
+		return openID.getUserName();
+	}
 }

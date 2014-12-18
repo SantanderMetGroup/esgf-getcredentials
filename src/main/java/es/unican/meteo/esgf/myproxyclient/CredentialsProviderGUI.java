@@ -13,21 +13,29 @@ import java.awt.event.ItemListener;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.concurrent.Callable;
 
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+
+import es.unican.meteo.esgf.common.ESGFCredentials;
 
 public class CredentialsProviderGUI extends JFrame {
 
@@ -43,17 +51,22 @@ public class CredentialsProviderGUI extends JFrame {
 	private JComboBox idpCombo;
 	private JTextField userField;
 	private JPasswordField passField;
+	private ImageIcon loadingIcon;
+	private JPanel messagePanel;
 
 	public CredentialsProviderGUI(CredentialsProvider credentialsProvider)
 			throws HeadlessException {
-		super("ESGF MyProxy service client");
+		super("ESGF Credentials Provider");
 
 		this.credentialsProvider = credentialsProvider;
+        this.loadingIcon = new ImageIcon(getClass().getClassLoader().getResource("ajax-loader.gif"));
+
 		configureBtRetrieveButton();
 
 		JPanel idPanel = generateIdPanel();
 		JPanel optionPanel = generateWriteOptionPanel();
-		JPanel messagePanel = generateMessagePanel();
+		messagePanel = generateMessagePanel();
+
 
 		JPanel auxPanel = new JPanel(new BorderLayout());
 		auxPanel.add(idPanel, BorderLayout.NORTH);
@@ -66,7 +79,11 @@ public class CredentialsProviderGUI extends JFrame {
 		setLayout(new BorderLayout());
 		add(mainPanel, BorderLayout.CENTER);
 		add(messagePanel, BorderLayout.SOUTH);
+		
 
+	   //	add(new JLabel("loading... ", loading, JLabel.CENTER));
+		
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		pack();
 		setVisible(true);
 	}
@@ -79,7 +96,16 @@ public class CredentialsProviderGUI extends JFrame {
 		btRetrieve.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent paramActionEvent) {
+				
+				// If any file wasn't selected to be generated, notify it
+				if(!credentialsProvider.isWriteCaCertsPem() && !credentialsProvider.isWriteJCEKSKeystore()
+						&& !credentialsProvider.isWriteJKSKeystore() && !credentialsProvider.isWritePem()
+						&& !credentialsProvider.isWriteTrustRootsCerts() && !credentialsProvider.isWriteTruststore()){
+					JOptionPane.showMessageDialog(CredentialsProviderGUI.this, "There is no file selected in \"Generate\" section");
+					
+				}else{
 				try {
+					
 					String user = userField.getText().trim();
 					char[] password = passField.getPassword();
 					if (user != null && password != null && !user.equals("")
@@ -100,8 +126,50 @@ public class CredentialsProviderGUI extends JFrame {
 						System.out.println("Using "
 								+ credentialsProvider.getMyProxyLib()
 								+ " lib...");
-						credentialsProvider.retrieveCredentials();
-						addMessage("Success!");
+
+						final JDialog busyDialog = new JDialog(CredentialsProviderGUI.this);
+						JLabel lbWait = new JLabel("retrieving... ", CredentialsProviderGUI.this.loadingIcon, JLabel.CENTER);
+						busyDialog.add(lbWait);
+						busyDialog.setLocationRelativeTo(CredentialsProviderGUI.this);
+						busyDialog.setUndecorated(true);
+						busyDialog.pack();
+						busyDialog.setAlwaysOnTop(true);
+						busyDialog.setVisible(false);
+						
+						Thread thread = new Thread(new Runnable() {
+				            @Override
+				            public void run() {
+				            	busyDialog.setVisible(true);
+				            	CredentialsProviderGUI.this.btRetrieve.setEnabled(false);
+				                try {
+									CredentialsProviderGUI.this.credentialsProvider.retrieveCredentials();
+									printMessageSuccess();
+								} catch (Exception e) {
+									if(e.getMessage()!=null && (e.getMessage().equals(CredentialsProviderGUI.this.credentialsProvider.getOpenID()))){
+							            StackTraceElement[] stacktrace = e.getStackTrace();
+										if(stacktrace.length>0){
+											if(stacktrace[0].getFileName().equals("HttpURLConnection.java")){
+												StringWriter sw = new StringWriter();
+												PrintWriter pw = new PrintWriter(sw);
+												e.printStackTrace(pw);
+												addMessage("Exception in HttpURLConnection. Incorrect OpenID URL. \n"+e.getMessage() + " " + sw.toString());
+											}
+										}
+									}else{
+									StringWriter sw = new StringWriter();
+									PrintWriter pw = new PrintWriter(sw);
+									e.printStackTrace(pw);
+									addMessage(e.getMessage() + " " + sw.toString());
+									}
+								}
+				                busyDialog.dispose();
+				                CredentialsProviderGUI.this.btRetrieve.setEnabled(true);
+				                validate();
+				                repaint();
+				            }
+				        });
+				
+				        thread.start();
 
 					} else {
 						if (user == null || user.equals("")) {
@@ -119,10 +187,40 @@ public class CredentialsProviderGUI extends JFrame {
 				}
 
 			}
+			}
 
 		});
 	}
 
+	private void printMessageSuccess() {
+		String messageStr= "Success!\n";
+    	messageStr = messageStr + "The follow files have been written in "
+				+ credentialsProvider.getCredentialsDirectory() +"\n";
+
+		if (credentialsProvider.isWritePem()) {
+			messageStr = messageStr + "- User certificate and private"
+					+ " key in pem format"+"\n";
+		}
+		if (credentialsProvider.isWriteCaCertsPem()) {
+			messageStr = messageStr + "- Trust CA certificates in pem format"+"\n";
+		}
+		if (credentialsProvider.isWriteTruststore()) {
+			messageStr = messageStr + "- Trust CA certificates in JKS keystore format"+"\n";
+		}
+		if (credentialsProvider.isWriteTrustRootsCerts()) {
+			messageStr = messageStr + "- Trust CA certificates in a folder"+"\n";
+		}
+		if (credentialsProvider.isWriteJKSKeystore()) {
+			messageStr = messageStr + "- JKS keystore file. This keystore contains certificate,"
+							+ " certificate chain and private key of user"+"\n";
+		}
+		if (credentialsProvider.isWriteJCEKSKeystore()) {
+			messageStr = messageStr + "- JCEKS keystore file. This keystore contains certificate,"
+							+ " certificate chain and private key of user"+"\n";
+		}
+    	addMessage(messageStr);
+		
+	}
 	/**
 	 * Configure and generate option panel
 	 * 
@@ -130,15 +228,25 @@ public class CredentialsProviderGUI extends JFrame {
 	 */
 	private JPanel generateWriteOptionPanel() {
 
-		// Init atributtes
-		JPanel optPanel = new JPanel(new GridLayout(6, 1));
+		JPanel mainOptPanel= new JPanel(new BorderLayout());
+		mainOptPanel.setBorder(BorderFactory.createTitledBorder("Generate:"));
+		
+		// Write options checkboxes
+		JPanel writeOptPanel = new JPanel(new GridLayout(6, 1));
 		final JCheckBox chkPem = new JCheckBox("credentials.pem");
+		chkPem.setToolTipText("User certificate and private key in pem format");
 		final JCheckBox chkJKS = new JCheckBox("keystore (JKS type)");
+		chkJKS.setToolTipText("JKS keystore file. This keystore contains certificate,"
+				+ " certificate chain and private key of user");
 		final JCheckBox chkJCEKS = new JCheckBox("keystore (JCEKS type)");
-		final JCheckBox chkTruststore = new JCheckBox("esgf-truststore");
+		chkJCEKS.setToolTipText("JCEKS keystore file. This keystore contains certificate,"
+				+ " certificate chain and private key of user");
+		final JCheckBox chkTruststore = new JCheckBox("esg-truststore.ts");
+		chkTruststore.setToolTipText("Trust CA certificates in JKS keystore format");
 		final JCheckBox chkCerts = new JCheckBox("certificates");
-		final JCheckBox chkCacerts = new JCheckBox("ca-certs.pem");
-		chkCacerts.setEnabled(false);
+		chkCerts.setToolTipText("Trust CA certificates in a folder");
+		final JCheckBox chkCacerts = new JCheckBox("ca-certificates.pem");
+		chkCacerts.setToolTipText(" Trust CA certificates in pem format");
 
 		// Checkboxes listener
 		ItemListener writeOptionsListener = new ItemListener() {
@@ -159,14 +267,6 @@ public class CredentialsProviderGUI extends JFrame {
 				} else if (source == chkCerts) {
 					credentialsProvider.setWriteTrustRootsCerts(source
 							.isSelected());
-					// cacerts only can be generated if certificates are
-					// retrieved
-					if (source.isSelected()) {
-						chkCacerts.setEnabled(true);
-					} else {
-						chkCacerts.setEnabled(false);
-						chkCacerts.setSelected(false);
-					}
 				} else if (source == chkCacerts) {
 					credentialsProvider.setWriteCaCertsPem(source.isSelected());
 				}
@@ -175,29 +275,89 @@ public class CredentialsProviderGUI extends JFrame {
 
 		// configure check boxes
 		chkPem.addItemListener(writeOptionsListener);
-		chkPem.setSelected(true);
+		chkPem.setSelected(false);
 		chkJKS.addItemListener(writeOptionsListener);
 		chkJKS.setSelected(false);
 		chkJCEKS.addItemListener(writeOptionsListener);
 		chkJCEKS.setSelected(false);
 		chkTruststore.addItemListener(writeOptionsListener);
-		chkTruststore.setSelected(true);
+		chkTruststore.setSelected(false);
 		chkCerts.addItemListener(writeOptionsListener);
-		chkCerts.setSelected(true);
+		chkCerts.setSelected(false);
 		chkCacerts.addItemListener(writeOptionsListener);
 		chkCacerts.setSelected(false);
 
 		// configure optPanel
-		optPanel.add(chkPem);
-		optPanel.add(chkJKS);
-		optPanel.add(chkJCEKS);
-		optPanel.add(chkTruststore);
-		optPanel.add(chkCerts);
-		optPanel.add(chkCacerts);
+		writeOptPanel.add(chkPem);
+		writeOptPanel.add(chkJKS);
+		writeOptPanel.add(chkJCEKS);
+		writeOptPanel.add(chkTruststore);
+		writeOptPanel.add(chkCerts);
+		writeOptPanel.add(chkCacerts);
 
-		optPanel.setBorder(BorderFactory.createTitledBorder("Generate:"));
+		// Profiles combo box
+		JPanel profilesPanel = new JPanel(new FlowLayout());
+		String [] profiles = {"----", "ESGF WGET Script (OpenSSL)", "ESGF WGET Script (GNU TLS)", 
+				"Aria2", "ToolsUI NetCDF"};
+		final JComboBox cBoxProfiles = new JComboBox(profiles);
+		cBoxProfiles.setBorder(BorderFactory.createTitledBorder("Selection profiles:"));
+		cBoxProfiles.setToolTipText("Case use profiles to automatic"
+				+" file selection");
+		// listener of idpComboBox
+		cBoxProfiles.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				if (cBoxProfiles.getSelectedItem()
+						.equals("ESGF WGET Script (OpenSSL)")) {
+					chkPem.setSelected(true);
+					chkJKS.setSelected(false);
+					chkJCEKS.setSelected(false);
+					chkTruststore.setSelected(true);
+					chkCerts.setSelected(true);
+					chkCacerts.setSelected(false);
+				} else if (cBoxProfiles.getSelectedItem()
+						.equals("ESGF WGET Script (GNU TLS)")) {
+					chkPem.setSelected(true);
+					chkJKS.setSelected(false);
+					chkJCEKS.setSelected(false);
+					chkTruststore.setSelected(true);
+					chkCerts.setSelected(false);
+					chkCacerts.setSelected(true);
+				}else if (cBoxProfiles.getSelectedItem()
+						.equals("Aria2")) {
+					chkPem.setSelected(true);
+					chkJKS.setSelected(false);
+					chkJCEKS.setSelected(false);
+					chkTruststore.setSelected(false);
+					chkCerts.setSelected(false);
+					chkCacerts.setSelected(true);
+				}else if (cBoxProfiles.getSelectedItem()
+						.equals("ToolsUI NetCDF")) {
+					chkPem.setSelected(false);
+					chkJKS.setSelected(true);
+					chkJCEKS.setSelected(false);
+					chkTruststore.setSelected(true);
+					chkCerts.setSelected(false);
+					chkCacerts.setSelected(false);	
+				}else if (cBoxProfiles.getSelectedItem()
+						.equals("----")) {
+					chkPem.setSelected(false);
+					chkJKS.setSelected(false);
+					chkJCEKS.setSelected(false);
+					chkTruststore.setSelected(false);
+					chkCerts.setSelected(false);
+					chkCacerts.setSelected(false);
+				}
+			}
+		});
+		profilesPanel.add(cBoxProfiles);
 
-		return optPanel;
+
+
+		mainOptPanel.add(writeOptPanel, BorderLayout.WEST);
+		mainOptPanel.add(profilesPanel, BorderLayout.EAST);
+
+		return mainOptPanel;
 	}
 
 	private JPanel generateMessagePanel() {
@@ -228,7 +388,7 @@ public class CredentialsProviderGUI extends JFrame {
 		boolean multLibraries = false;
 		try {
 			this.getClass().getClassLoader()
-					.loadClass("org.globus.myproxy.MyProxy");
+			.loadClass("org.globus.myproxy.MyProxy");
 			multLibraries = true;
 		} catch (ClassNotFoundException e) {
 		}
@@ -238,16 +398,21 @@ public class CredentialsProviderGUI extends JFrame {
 
 		// providers
 		JLabel providerLabel = new JLabel("Id Provider:");
+		providerLabel.setToolTipText("Identity provider of your account");
 		idpCombo = new JComboBox(nodes);
 		idpCombo.addItem("<< Custom OpenID URL >>");
+		idpCombo.setToolTipText("Identity provider of your account");
 
 		// user & password
 		String userStr = "https://" + idpCombo.getSelectedItem()
 				+ "/esgf-idp/openid/";
 		final JLabel userLabel = new JLabel(userStr);
+		userLabel.setToolTipText("OpenID");
 		userField = new JTextField(20);
+		userField.setToolTipText("OpenID");
 		JLabel passLabel = new JLabel("password:");
 		passField = new JPasswordField(20);
+
 
 		// Build the intro panel
 		GridBagConstraints constraints = new GridBagConstraints();
@@ -292,7 +457,7 @@ public class CredentialsProviderGUI extends JFrame {
 						.equals("<< Custom OpenID URL >>")) {
 					userField.setColumns(35);
 					userField
-							.setText("https://[IdPNodeName]/esgf-idp/openid/[userName]");
+					.setText("https://[IdPNodeName]/esgf-idp/openid/[userName]");
 
 					// change position in intro panel
 					GridBagConstraints constraints = new GridBagConstraints();
@@ -329,8 +494,10 @@ public class CredentialsProviderGUI extends JFrame {
 		});
 
 		// Options of folder in idpPanel
-		JPanel idFolOptsPanel = new JPanel(new GridLayout(2, 2));
-		final JRadioButton rbEsgFol = new JRadioButton("Default folder (.esg)");
+		JPanel idFolOptsPanel = new JPanel(new GridLayout(2, 1));
+		idFolOptsPanel.setToolTipText("Options to select the folder where the files will be generated");
+		final String defaultFolder = credentialsProvider.getCredentialsDirectory();
+		final JRadioButton rbEsgFol = new JRadioButton("Default folder ("+defaultFolder+")");
 		rbEsgFol.setSelected(true);
 		final JRadioButton rbAnotherFol = new JRadioButton("Another folder");
 		final ButtonGroup folGroup = new ButtonGroup(); // radio button group
@@ -338,6 +505,7 @@ public class CredentialsProviderGUI extends JFrame {
 		folGroup.add(rbAnotherFol);
 		final JCheckBox chkBootstrap = new JCheckBox("bootstrap certificates");
 		chkBootstrap.setSelected(false);
+		chkBootstrap.setToolTipText("Bootstrapping certificates of myproxy service");
 		chkBootstrap.addItemListener(new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
@@ -348,17 +516,19 @@ public class CredentialsProviderGUI extends JFrame {
 
 		final JButton btChangeCredFol = new JButton("Change esg folder");
 		btChangeCredFol.setEnabled(false);
-		final JPanel btPanelAux = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		btPanelAux.add(btChangeCredFol);
-		idFolOptsPanel.add(rbEsgFol);
-		idFolOptsPanel.add(new JLabel(" "));
-		idFolOptsPanel.add(rbAnotherFol);
-		idFolOptsPanel.add(btPanelAux);
+		final JPanel auxEsgFolder = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		auxEsgFolder.add(rbEsgFol);
+		final JPanel auxAnotherFolder = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		auxAnotherFolder.add(rbAnotherFol);
+		auxAnotherFolder.add(btChangeCredFol);
+		idFolOptsPanel.add(auxEsgFolder);
+		idFolOptsPanel.add(auxAnotherFolder);
 		idFolOptsPanel.setBorder(BorderFactory
 				.createTitledBorder("Select folder:"));
 
 		// Options of MyProxy Lib in idpPanel
 		JPanel idLibOptsPanel = new JPanel(new GridLayout(4, 1));
+		idLibOptsPanel.setToolTipText("Configure myproxy client");
 		if (multLibraries) {
 			final JRadioButton rbMyProxyLogon = new JRadioButton(
 					"use MyProxyLogon lib (v-1.0)");
@@ -461,4 +631,22 @@ public class CredentialsProviderGUI extends JFrame {
 		idPanel.add(optsPanel, BorderLayout.SOUTH);
 		return idPanel;
 	}
+	
+//	private JPanel loadingPanel() {
+//	    JPanel panel = new JPanel();
+//	    BoxLayout layoutMgr = new BoxLayout(panel, BoxLayout.PAGE_AXIS);
+//	    panel.setLayout(layoutMgr);
+//
+//	    ClassLoader cldr = this.getClass().getClassLoader();
+//	    java.net.URL imageURL   = cldr.getResource("ajax-loader.gif");
+//	    ImageIcon imageIcon = new ImageIcon(imageURL);
+//	    JLabel iconLabel = new JLabel();
+//	    iconLabel.setIcon(imageIcon);
+//	    imageIcon.setImageObserver(iconLabel);
+//
+//	    JLabel label = new JLabel("Loading...");
+//	    panel.add(iconLabel);
+//	    panel.add(label);
+//	    return panel;
+//	}
 }
