@@ -8,6 +8,14 @@
 	<name>getESGFCredentials</name>
 
 	<build>
+
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
+
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -83,6 +91,7 @@
 
 							<artifactSet>
 								<excludes>
+									<exclude>edu.ucar:**</exclude>
 									<exclude>org.jglobus:myproxy</exclude>
 									<exclude>org.jglobus:gss</exclude>
 									<exclude>org.jglobus:jsse</exclude>
@@ -208,6 +217,13 @@
 			<artifactId>jackson-databind</artifactId>
 			<version>2.0.0</version>
 			<scope>test</scope>
+		</dependency>
+
+		<!-- This dependency must be excluded in shade jars -->
+		<dependency>
+			<groupId>edu.ucar</groupId>
+			<artifactId>netcdf</artifactId>
+			<version>4.3.23</version>
 		</dependency>
 
 	</dependencies>

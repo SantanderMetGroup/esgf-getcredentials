@@ -11,8 +11,11 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Properties;
 import java.util.concurrent.Callable;
 
 import javax.swing.BorderFactory;
@@ -39,12 +42,7 @@ import es.unican.meteo.esgf.common.ESGFCredentials;
 
 public class CredentialsProviderGUI extends JFrame {
 
-	private static String[] nodes = { "esgf-index1.ceda.ac.uk",
-			"pcmdi9.llnl.gov", "esgf-node.ipsl.fr", "esgf-data.dkrz.de",
-			"data.meteo.unican.es", "esgdata.gfdl.noaa.gov", "dev.esg.anl.gov",
-			"esg.bnu.edu.cn", "adm07.cmcc.it", "euclipse1.dkrz.de",
-			"esgf.nccs.nasa.gov", "esg-datanode.jpl.nasa.gov",
-			"esg2.nci.org.au", "esg01.nersc.gov", "esg.ccs.ornl.gov" };
+	private String[] nodes;
 	private CredentialsProvider credentialsProvider;
 	private JButton btRetrieve;
 	private JTextArea txaMessages;
@@ -54,12 +52,13 @@ public class CredentialsProviderGUI extends JFrame {
 	private ImageIcon loadingIcon;
 	private JPanel messagePanel;
 
-	public CredentialsProviderGUI(CredentialsProvider credentialsProvider)
+	public CredentialsProviderGUI(CredentialsProvider credentialsProvider, String[] nodes)
 			throws HeadlessException {
 		super("ESGF Credentials Provider");
 
 		this.credentialsProvider = credentialsProvider;
         this.loadingIcon = new ImageIcon(getClass().getClassLoader().getResource("ajax-loader.gif"));
+        this.nodes = nodes;
 
 		configureBtRetrieveButton();
 

@@ -1,8 +1,12 @@
 package es.unican.meteo.esgf.myproxyclient;
 
+import java.awt.GraphicsEnvironment;
 import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Map;
+import java.util.Properties;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
@@ -10,7 +14,9 @@ import org.docopt.Docopt;
 
 import es.unican.meteo.esgf.myproxyclient.CredentialsProvider.Lib;
 
-public final class CredentialsProviderUI {
+public final class CredentialsProviderCLI {
+
+	private static final String ESGF_NODES_PROP = "getcredentials.properties";
 
 	public static void main(final String[] args) throws Exception {
 
@@ -47,10 +53,28 @@ public final class CredentialsProviderUI {
 				+ " -h --help                       Show this screen.\n"
 				+ " --version                       Show version.\n" + "\n";
 
-		if (args.length < 1) {
+		if (args.length < 1 && !GraphicsEnvironment.isHeadless()) {
 			// usage: esgf-getcredentials
+
+			InputStream is =  CredentialsProvider.class.getClassLoader().getResourceAsStream(ESGF_NODES_PROP);
+
+			Properties esgfNodes = new Properties();
+			
+			try {
+				esgfNodes.load(is);
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.err.print("Error reading "+ ESGF_NODES_PROP+" file");
+			}
+			
+			//get nodes property that contains the nodes split by " "
+			String strNodes = esgfNodes.getProperty("getcredentials.nodes");
+			String[] nodes = strNodes.split(" "); 
 			CredentialsProviderGUI ui = new CredentialsProviderGUI(
-					credentialsProvider);
+					credentialsProvider, nodes);
+		
+
+			
 		} else {
 			// usage: esgf-getcredentials (-o <openid> | --openid <openid>)
 			// [options]
@@ -93,11 +117,15 @@ public final class CredentialsProviderUI {
 
 			// get password
 			if (password == null) {
-				BufferedReader br = new BufferedReader(new InputStreamReader(
-						System.in));
-				System.out.print("Password:");
-				br = new BufferedReader(new InputStreamReader(System.in));
-				password = br.readLine();
+				if(System.console()!=null ){
+					password = System.console().readPassword("Password: ").toString();
+				}else{				
+					BufferedReader br = new BufferedReader(new InputStreamReader(
+							System.in));
+					System.out.print("Password: ");
+					br = new BufferedReader(new InputStreamReader(System.in));
+					password = br.readLine();
+				}
 			}
 
 			// configure user openid
@@ -129,7 +157,7 @@ public final class CredentialsProviderUI {
 				for (String name : LogManager.getLoggingMXBean()
 						.getLoggerNames()) {
 					LogManager.getLoggingMXBean()
-							.setLoggerLevel(name, "SEVERE");
+					.setLoggerLevel(name, "SEVERE");
 				}
 			}
 
@@ -149,20 +177,20 @@ public final class CredentialsProviderUI {
 			}
 			if (writeTruststore) {
 				System.out
-						.println("- Trust CA certificates in JKS keystore format");
+				.println("- Trust CA certificates in JKS keystore format");
 			}
 			if (writeTrustroots) {
 				System.out.println("- Trust CA certificates in a folder");
 			}
 			if (writeJKSkeystore) {
 				System.out
-						.println("- JKS keystore file. This keystore contains certificate,"
-								+ " certificate chain and private key of user");
+				.println("- JKS keystore file. This keystore contains certificate,"
+						+ " certificate chain and private key of user");
 			}
 			if (writeJCEKSkeystore) {
 				System.out
-						.println("- JCEKS keystore file. This keystore contains certificate,"
-								+ " certificate chain and private key of user");
+				.println("- JCEKS keystore file. This keystore contains certificate,"
+						+ " certificate chain and private key of user");
 			}
 		}
 	}
