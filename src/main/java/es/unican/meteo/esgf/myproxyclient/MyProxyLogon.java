@@ -175,7 +175,7 @@ public class MyProxyLogon {
 	}
 
 	public void connect() throws IOException, GeneralSecurityException {
-		SSLContext localSSLContext = SSLContext.getInstance("SSL");
+		SSLContext localSSLContext = SSLContext.getInstance("TLS");
 		TrustManager[] arrayOfTrustManager = { new MyTrustManager() };
 		localSSLContext.init(getKeyManagers(), arrayOfTrustManager,
 				new SecureRandom());
@@ -183,7 +183,8 @@ public class MyProxyLogon {
 				.getSocketFactory();
 		this.socket = ((SSLSocket) localSSLSocketFactory.createSocket(
 				this.host, this.port));
-		this.socket.setEnabledProtocols(new String[] { "SSLv3" });
+		this.socket.setEnabledProtocols(new String[] { "TLSv1" });
+//		this.socket.setEnabledProtocols(new String[] { "SSLv3" });
 		this.socket.startHandshake();
 		this.socketIn = new BufferedInputStream(this.socket.getInputStream());
 		this.socketOut = new BufferedOutputStream(this.socket.getOutputStream());
