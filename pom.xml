@@ -4,10 +4,18 @@
 	<groupId>getESGFCredentials</groupId>
 	<artifactId>getESGFCredentials</artifactId>
 	<packaging>jar</packaging>
-	<version>0.1</version>
+	<version>0.1.1</version>
 	<name>getESGFCredentials</name>
 
 	<build>
+
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
+
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -64,7 +72,7 @@
 							<transformers>
 								<transformer
 									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>es.unican.meteo.esgf.myproxyclient.CredentialsProviderUI</mainClass>
+									<mainClass>es.unican.meteo.esgf.myproxyclient.CredentialsProviderCLI</mainClass>
 								</transformer>
 							</transformers>
 						</configuration>
@@ -83,6 +91,7 @@
 
 							<artifactSet>
 								<excludes>
+									<exclude>edu.ucar:**</exclude>
 									<exclude>org.jglobus:myproxy</exclude>
 									<exclude>org.jglobus:gss</exclude>
 									<exclude>org.jglobus:jsse</exclude>
@@ -143,7 +152,7 @@
 							<transformers>
 								<transformer
 									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>es.unican.meteo.esgf.myproxyclient.CredentialsProviderUI</mainClass>
+									<mainClass>es.unican.meteo.esgf.myproxyclient.CredentialsProviderCLI</mainClass>
 								</transformer>
 							</transformers>
 						</configuration>
@@ -208,6 +217,13 @@
 			<artifactId>jackson-databind</artifactId>
 			<version>2.0.0</version>
 			<scope>test</scope>
+		</dependency>
+
+		<!-- This dependency must be excluded in shade jars -->
+		<dependency>
+			<groupId>edu.ucar</groupId>
+			<artifactId>netcdf</artifactId>
+			<version>4.3.23</version>
 		</dependency>
 
 	</dependencies>

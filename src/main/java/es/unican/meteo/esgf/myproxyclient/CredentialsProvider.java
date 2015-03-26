@@ -255,11 +255,8 @@ public class CredentialsProvider {
 	 *            websites
 	 * @param password
 	 *            OpenID password
-	 * @throws IOException
-	 *             if some error happens getting credentials
 	 */
-	public synchronized void setOpenID(String openIDURL, char[] password)
-			throws IOException {
+	public synchronized void setOpenID(String openIDURL, char[] password){
 		LOG.trace("[IN]  setOpenID");
 		openID = new PasswordAuthentication(openIDURL, password);
 
