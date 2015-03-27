@@ -117,8 +117,9 @@ public final class CredentialsProviderCLI {
 
 			// get password
 			if (password == null) {
-				if(System.console()!=null ){
-					password = System.console().readPassword("Password: ").toString();
+				if(System.console()!=null ){ 
+					//in shell
+					password = new String(System.console().readPassword("Password: "));
 				}else{				
 					BufferedReader br = new BufferedReader(new InputStreamReader(
 							System.in));
