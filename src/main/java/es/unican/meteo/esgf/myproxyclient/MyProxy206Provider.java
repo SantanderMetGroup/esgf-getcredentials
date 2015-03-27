@@ -19,6 +19,7 @@ import org.ietf.jgss.GSSException;
 import es.unican.meteo.esgf.common.ESGFCredentials;
 import es.unican.meteo.esgf.util.PemUtil;
 
+@Deprecated
 public class MyProxy206Provider implements MyProxyProvider {
 
 	/** Logger. */

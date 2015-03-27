@@ -49,6 +49,7 @@ import javax.net.ssl.X509TrustManager;
 import javax.security.auth.login.FailedLoginException;
 import javax.security.auth.x500.X500Principal;
 
+import org.apache.commons.httpclient.HttpConnection;
 import org.bouncycastle.LICENSE;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1Sequence;
@@ -184,8 +185,9 @@ public class MyProxyLogon {
 		this.socket = ((SSLSocket) localSSLSocketFactory.createSocket(
 				this.host, this.port));
 		this.socket.setEnabledProtocols(new String[] { "TLSv1" });
-//		this.socket.setEnabledProtocols(new String[] { "SSLv3" });
+		
 		this.socket.startHandshake();
+		
 		this.socketIn = new BufferedInputStream(this.socket.getInputStream());
 		this.socketOut = new BufferedOutputStream(this.socket.getOutputStream());
 		this.state = State.CONNECTED;
@@ -299,8 +301,11 @@ public class MyProxyLogon {
 								"bad MyProxy protocol RESPONSE: expecting "
 										+ str2 + " but received " + str1);
 					}
+					
+					if(str1.length()>str2.length()){
 					this.trustrootData[j] = new String(Base64.decode(str1
 							.substring(str2.length())));
+					}//TODO add warning
 				}
 			}
 		}
@@ -382,7 +387,9 @@ public class MyProxyLogon {
 		for (int i = 0; i < this.trustrootFilenames.length; i++) {
 			FileOutputStream localFileOutputStream = new FileOutputStream(
 					paramString + File.separator + this.trustrootFilenames[i]);
-			localFileOutputStream.write(this.trustrootData[i].getBytes());
+			if (this.trustrootData[i] != null){
+				localFileOutputStream.write(this.trustrootData[i].getBytes());
+			}
 			localFileOutputStream.close();
 		}
 		return true;

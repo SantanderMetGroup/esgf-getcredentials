@@ -1,12 +1,23 @@
 package es.unican.meteo.esgf.myproxyclient;
 
 import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
 import java.security.PrivateKey;
+import java.security.SecureRandom;
 import java.security.Security;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.Iterator;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
 
 import es.unican.meteo.esgf.common.ESGFCredentials;
 
@@ -37,7 +48,27 @@ public class MyProxyLogonProvider implements MyProxyProvider {
 		MyProxyLogon myProxyLogon = getConnection(bootstrap, myProxyParams);
 
 		LOG.debug("Retrieving credentials from the MyProxy server..");
-		myProxyLogon.getCredentials();
+		try{
+			myProxyLogon.getCredentials();
+		}catch(SSLHandshakeException e){
+			//Avoid "CN doesn't match server name" issue: the OpenID indicates 
+			//that the MyProxy authentication service is located at some host and
+			//port (usually 7512), but then, this host and port, in some cases, 
+			//have a certificate with a subject that does not match the server host
+			//name (and without any alternative subject name). 
+			//Therefore, the SSL connection fails.
+			try {
+				LOG.warn(e.getMessage());
+				
+				//Replace host for its canonical host name
+				InetAddress inetAddress=InetAddress.getByName(myProxyParams.getHost());
+			    myProxyLogon.setHost(inetAddress.getCanonicalHostName());
+			    myProxyLogon.getCredentials();
+			} catch (UnknownHostException e1) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 
 		if (myProxyParams.isRequestTrustRoots()) {
 			try {
@@ -76,7 +107,21 @@ public class MyProxyLogonProvider implements MyProxyProvider {
 		MyProxyLogon myProxyLogon = new MyProxyLogon();
 		myProxyLogon.setUsername(myProxyParams.getUserName());
 		myProxyLogon.setPassphrase(myProxyParams.getPassword());
-		myProxyLogon.setHost(myProxyParams.getHost());
+
+		//Avoid "CN doesn't match server name" issue: the OpenID indicates 
+		//that the MyProxy authentication service is located at some host and
+		//port (usually 7512), but then, this host and port, in some cases, 
+		//have a certificate with a subject that does not match the server host
+		//name (and without any alternative subject name). 
+		//Therefore, the SSL connection fails.
+		try {
+			InetAddress inetAddress=InetAddress.getByName(myProxyParams.getHost());
+		  //  myProxyLogon.setHost(inetAddress.getCanonicalHostName());
+			myProxyLogon.setHost(myProxyParams.getHost());
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		myProxyLogon.setPort(myProxyParams.getPort());
 		myProxyLogon.setLifetime(myProxyParams.getLifetime());
 		myProxyLogon.setBootstrap(bootstrap);

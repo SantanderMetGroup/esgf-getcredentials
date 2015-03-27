@@ -33,7 +33,7 @@ public final class CredentialsProviderCLI {
 				+ " esgf-getcredentials --version\n"
 				+ "Options:\n"
 				+ " -o <openid> --openid <openid>  OpenID endpoint from where myproxy information can be gathered.\n"
-				+ " -p --password <password>        OpenID passphrase.\n"
+				+ " -p <password> --password <password>        OpenID passphrase.\n"
 				+ " --output <path>                 Path of folder where the retrieved certificates will be stored"
 				+ "[default: "
 				+ esgPath
