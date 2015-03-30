@@ -318,7 +318,7 @@ public class MyProxyLogon {
 		}
 		KeyPairGenerator localKeyPairGenerator = KeyPairGenerator
 				.getInstance("RSA");
-		localKeyPairGenerator.initialize(1024);
+		localKeyPairGenerator.initialize(1024); 
 		this.keypair = localKeyPairGenerator.genKeyPair();
 		PKCS10CertificationRequest localPKCS10CertificationRequest = new PKCS10CertificationRequest(
 				"SHA1withRSA", new X500Principal("CN=ignore"),
