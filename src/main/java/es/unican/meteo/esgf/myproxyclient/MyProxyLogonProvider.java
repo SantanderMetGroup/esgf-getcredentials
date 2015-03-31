@@ -51,23 +51,20 @@ public class MyProxyLogonProvider implements MyProxyProvider {
 		try{
 			myProxyLogon.getCredentials();
 		}catch(SSLHandshakeException e){
-			//Avoid "CN doesn't match server name" issue: the OpenID indicates 
-			//that the MyProxy authentication service is located at some host and
-			//port (usually 7512), but then, this host and port, in some cases, 
-			//have a certificate with a subject that does not match the server host
-			//name (and without any alternative subject name). 
-			//Therefore, the SSL connection fails.
-			try {
-				LOG.warn(e.getMessage());
-				
-				//Replace host for its canonical host name
-				InetAddress inetAddress=InetAddress.getByName(myProxyParams.getHost());
-			    myProxyLogon.setHost(inetAddress.getCanonicalHostName());
-			    myProxyLogon.getCredentials();
-			} catch (UnknownHostException e1) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		    //Avoid "CN doesn't match server name" issue: the OpenID indicates 
+		    //that the MyProxy authentication service is located at some host and
+		    //port (usually 7512), but then, this host and port, in some cases, 
+		    //have a certificate with a subject that does not match the server host
+		    //name (and without any alternative subject name). 
+		    //Therefore, the SSL connection fails.
+
+		    LOG.warn(e.getMessage());
+
+		    //Replace host for its canonical host name
+		    InetAddress inetAddress=InetAddress.getByName(myProxyParams.getHost());
+		    myProxyLogon.setHost(inetAddress.getCanonicalHostName());
+		    myProxyLogon.getCredentials();
+
 		}
 
 		if (myProxyParams.isRequestTrustRoots()) {
