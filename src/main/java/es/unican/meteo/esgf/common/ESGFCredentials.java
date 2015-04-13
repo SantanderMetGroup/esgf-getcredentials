@@ -60,7 +60,7 @@ public class ESGFCredentials {
     /**
      * Gets the server certificates.
      * 
-     * @return
+     * @return {@link X509Certificate}
      */
     public Collection<X509Certificate> getX509ServerCertificates() {
         return x509ServerCertificates;
@@ -80,6 +80,7 @@ public class ESGFCredentials {
      * Sets the user RSA private key.
      * 
      * @param privateKey
+     *            user RSA private key
      */
     public void setPrivateKey(PrivateKey privateKey) {
         this.privateKey = privateKey;

@@ -4,7 +4,7 @@
 	<groupId>getESGFCredentials</groupId>
 	<artifactId>getESGFCredentials</artifactId>
 	<packaging>jar</packaging>
-	<version>0.1.3</version>
+	<version>0.1.4</version>
 	<name>getESGFCredentials</name>
 
 	<build>
@@ -91,13 +91,12 @@
 
 							<artifactSet>
 								<excludes>
-									<exclude>edu.ucar:**</exclude>
+									<!--  <exclude>edu.ucar:**</exclude> -->
 									<exclude>org.jglobus:myproxy</exclude>
 									<exclude>org.jglobus:gss</exclude>
 									<exclude>org.jglobus:jsse</exclude>
 									<exclude>org.jglobus:ssl-proxies</exclude>
 									<exclude>commons-logging:commons-logging</exclude>
-									<exclude>commons-io:commons-io</exclude>
 								</excludes>
 							</artifactSet>
 
@@ -108,38 +107,138 @@
 									<artifact>org.bouncycastle:bcprov-jdk16</artifact>
 									<excludes>
 										<exclude>org/bouncycastle/crypto/**</exclude>
+										<exclude>org/bouncycastle/i18n/**</exclude>
 										<exclude>org/bouncycastle/math/**</exclude>
+										<exclude>org/bouncycastle/mozilla/**</exclude>
+										<exclude>org/bouncycastle/ocsp/**</exclude>
+										<exclude>org/bouncycastle/openssl/**</exclude>
+										<exclude>org/bouncycastle/voms/**</exclude>
 										<exclude>org/bouncycastle/x509/**</exclude>
-										<exclude>org/bouncycastle/asn1/bc/**</exclude>
-										<exclude>org/bouncycastle/asn1/iana/**</exclude>
-										<exclude>org/bouncycastle/asn1/isismtt/**</exclude>
-										<exclude>org/bouncycastle/asn1/misc/**</exclude>
-										<exclude>org/bouncycastle/asn1/sec/**</exclude>
-										<exclude>org/bouncycastle/asn1/util/**</exclude>
-										<exclude>org/bouncycastle/jce/exception/**</exclude>
-										<exclude>org/bouncycastle/jce/interfaces/**</exclude>
-										<exclude>org/bouncycastle/jce/provider/**</exclude>
+										<exclude>org/bouncycastle/util/test/**</exclude>
+										<exclude>org/bouncycastle/util/Stream**</exclude>
+										<exclude>org/bouncycastle/util/Store**</exclude>
+										<exclude>org/bouncycastle/util/Selec**</exclude>
+										<exclude>org/bouncycastle/util/IP**</exclude>
+										<exclude>org/bouncycastle/util/Collec**</exclude>
+										<exclude>org/bouncycastle/util/BigInt**</exclude>
+										<exclude>org/bouncycastle/util/AllT**</exclude>
+										<exclude>org/bouncycastle/util/test/**</exclude>
+										<exclude>org/bouncycastle/util/encoders/Buff**</exclude>
+										<exclude>org/bouncycastle/util/encoders/T**</exclude>
+										<exclude>org/bouncycastle/util/encoders/U**</exclude>
+										<exclude>org/bouncycastle/util/encoders/HexTransla**</exclude>
 										<exclude>org/bouncycastle/jce/spec/**</exclude>
-										<exclude>org/bouncycastle/jce/ECGOST3410NamedCurveTable**</exclude>
-										<exclude>org/bouncycastle/jce/PrincipalUtil**</exclude>
-										<exclude>org/bouncycastle/jce/ProviderConfigurationPermission**</exclude>
-										<exclude>org/bouncycastle/jce/X509LDAP**</exclude>
-										<exclude>org/bouncycastle/asn1/x509/Att**</exclude>
-										<exclude>org/bouncycastle/asn1/x509/B**</exclude>
-										<exclude>org/bouncycastle/asn1/x509/C**</exclude>
-										<exclude>org/bouncycastle/asn1/x509/D**</exclude>
-										<exclude>org/bouncycastle/asn1/x509/G**</exclude>
-										<exclude>org/bouncycastle/asn1/x509/H**</exclude>
-										<exclude>org/bouncycastle/asn1/x509/I**</exclude>
-										<exclude>org/bouncycastle/asn1/x509/K**</exclude>
-										<exclude>org/bouncycastle/asn1/x509/N**</exclude>
-										<exclude>org/bouncycastle/asn1/x509/O**</exclude>
-										<exclude>org/bouncycastle/asn1/x509/P**</exclude>
-										<exclude>org/bouncycastle/asn1/x509/R**</exclude>
-										<exclude>org/bouncycastle/asn1/x509/T**</exclude>
+										<exclude>org/bouncycastle/jce/provider/**</exclude>
+										<exclude>org/bouncycastle/jce/netscape/**</exclude>
+										<exclude>org/bouncycastle/jce/interfaces/**</exclude>
+										<exclude>org/bouncycastle/jce/exception/**</exclude>
+										<exclude>org/bouncycastle/jce/examples/**</exclude>
+										<exclude>org/bouncycastle/jce/X509V**</exclude>
+										<exclude>org/bouncycastle/jce/X509L**</exclude>
+										<exclude>org/bouncycastle/jce/X509K**</exclude>
+										<exclude>org/bouncycastle/jce/Pr**</exclude>
+										<exclude>org/bouncycastle/jce/PKCS7S**</exclude>
+										<exclude>org/bouncycastle/jce/M**</exclude>
+										<exclude>org/bouncycastle/jce/E**</exclude>
+										<exclude>org/bouncycastle/asn1/x500/**</exclude>
+										<exclude>org/bouncycastle/asn1/tsp/**</exclude>
+										<exclude>org/bouncycastle/asn1/smime/**</exclude>
+										<exclude>org/bouncycastle/asn1/sec/**</exclude>
+										<exclude>org/bouncycastle/asn1/ocsp/**</exclude>
+										<exclude>org/bouncycastle/asn1/ntt/**</exclude>
+										<exclude>org/bouncycastle/asn1/mozilla/**</exclude>
+										<exclude>org/bouncycastle/asn1/misc/**</exclude>
+										<exclude>org/bouncycastle/asn1/microsoft/**</exclude>
+										<exclude>org/bouncycastle/asn1/kisa/**</exclude>
+										<exclude>org/bouncycastle/asn1/isismtt/**</exclude>
+										<exclude>org/bouncycastle/asn1/icao/**</exclude>
+										<exclude>org/bouncycastle/asn1/iana/**</exclude>
+										<exclude>org/bouncycastle/asn1/gnu/**</exclude>
+										<exclude>org/bouncycastle/asn1/ess/**</exclude>
+										<exclude>org/bouncycastle/asn1/esf/**</exclude>
+										<exclude>org/bouncycastle/asn1/eac/**</exclude>
+										<exclude>org/bouncycastle/asn1/crmf/**</exclude>
+										<exclude>org/bouncycastle/asn1/cms/**</exclude>
+										<exclude>org/bouncycastle/asn1/cmp/**</exclude>
+										<exclude>org/bouncycastle/asn1/bc/**</exclude>
+										<exclude>org/bouncycastle/asn1/util/**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/sigi/**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/qualified/**</exclude>
 										<exclude>org/bouncycastle/asn1/x509/V**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/U**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/T**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/R**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/P**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/N**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/K**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/I**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/H**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/G**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/E**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/D**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/C**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/B**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/SubjectK**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/SubjectD**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/Au**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/Att**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/Acc**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/O**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/X509A**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/X509Ext**</exclude>
+										<exclude>org/bouncycastle/asn1/x509/X509Cert**</exclude>
+										<exclude>org/bouncycastle/asn1/x9/X962*</exclude>
+										<exclude>org/bouncycastle/asn1/x9/X9I**</exclude>
+										<exclude>org/bouncycastle/asn1/x9/X9F**</exclude>
+										<exclude>org/bouncycastle/asn1/x9/X9E**</exclude>
+										<exclude>org/bouncycastle/asn1/x9/X9C**</exclude>
+										<exclude>org/bouncycastle/asn1/x9/O**</exclude>
+										<exclude>org/bouncycastle/asn1/x9/K**</exclude>
+										<exclude>org/bouncycastle/asn1/teletrust/TeleTrusTN**</exclude>
+										<exclude>org/bouncycastle/asn1/pkcs/S**</exclude>
+										<exclude>org/bouncycastle/asn1/pkcs/RSAP**</exclude>
+										<exclude>org/bouncycastle/asn1/pkcs/RSAE**</exclude>
+										<exclude>org/bouncycastle/asn1/pkcs/RC2**</exclude>
+										<exclude>org/bouncycastle/asn1/pkcs/PKCS1**</exclude>
+										<exclude>org/bouncycastle/asn1/pkcs/Pf**</exclude>
+										<exclude>org/bouncycastle/asn1/pkcs/PB**</exclude>
+										<exclude>org/bouncycastle/asn1/pkcs/M**</exclude>
+										<exclude>org/bouncycastle/asn1/pkcs/K**</exclude>
+										<exclude>org/bouncycastle/asn1/pkcs/I**</exclude>
+										<exclude>org/bouncycastle/asn1/pkcs/E**</exclude>
+										<exclude>org/bouncycastle/asn1/pkcs/D**</exclude>
+										<exclude>org/bouncycastle/asn1/pkcs/A**</exclude>
+										<exclude>org/bouncycastle/asn1/pkcs/Co**</exclude>
+										<exclude>org/bouncycastle/asn1/pkcs/CertB**</exclude>
+										<exclude>org/bouncycastle/asn1/oiw/E**</exclude>
+										<exclude>org/bouncycastle/asn1/nist/NISTN**</exclude>
+										<exclude>org/bouncycastle/asn1/cryptopro/G**</exclude>
+										<exclude>org/bouncycastle/asn1/cryptopro/E**</exclude>
+										<exclude>org/bouncycastle/asn1/DERSequenceG**</exclude>
+										<exclude>org/bouncycastle/asn1/DERInput**</exclude>
+										<exclude>org/bouncycastle/asn1/DERGenerato**</exclude>
+										<exclude>org/bouncycastle/asn1/DERConstructedS**</exclude>
+										<exclude>org/bouncycastle/asn1/BERSequenceG**</exclude>
+										<exclude>org/bouncycastle/asn1/BEROctectStringG**</exclude>
+										<exclude>org/bouncycastle/asn1/BERNull**</exclude>
+										<exclude>org/bouncycastle/asn1/BERI**</exclude>
+										<exclude>org/bouncycastle/asn1/BERG**</exclude>
+										<exclude>org/bouncycastle/asn1/BERConstructedS**</exclude>
+										<exclude>org/bouncycastle/asn1/AS1Gen**</exclude>
 									</excludes>
 								</filter>
+								<filter>
+									<artifact>edu.ucar:**</artifact>
+									<excludes>
+										<exclude>*:*</exclude>
+									</excludes>
+									<includes>
+									    <include>ucar/nc2/util/net/HTTPAuthScheme</include>
+									    <include>ucar/nc2/util/net/HTTPSSLProvider</include>
+									    <include>ucar/nc2/util/net/HTTPSession</include>
+									</includes>
+								</filter>
+								
 								<filter>
 									<artifact>*:*</artifact>
 									<excludes>

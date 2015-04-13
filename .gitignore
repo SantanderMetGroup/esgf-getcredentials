@@ -24,3 +24,6 @@ local.properties
 .settings/
 .loadpath
 /bin/
+
+# ignore test properties
+/home/terryk/git/esgf-getcredentials/src/test/resources/authtest.properties

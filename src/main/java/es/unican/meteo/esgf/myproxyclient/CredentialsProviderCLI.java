@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Map;
 import java.util.Properties;
+import java.util.ResourceBundle;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
@@ -16,60 +17,33 @@ import es.unican.meteo.esgf.myproxyclient.CredentialsProvider.Lib;
 
 public final class CredentialsProviderCLI {
 
-    private static final String ESGF_NODES_PROP = "getcredentials.properties";
+    private static final String GET_CRED_PROPERTIES = "getcredentials.properties";
 
     public static void main(final String[] args) throws Exception {
 
         CredentialsProvider credentialsProvider = CredentialsProvider
                 .getInstance();
 
-        String esgPath = credentialsProvider.getCredentialsDirectory();
-        final String doc = "esgf-getcredentials.\n"
-                + "\n"
-                + "Usage:\n"
-                + " esgf-getcredentials\n"
-                + " esgf-getcredentials (-o <openid> | --openid <openid>) [options]\n"
-                + " esgf-getcredentials (-h | --help)\n"
-                + " esgf-getcredentials --version\n"
-                + "Options:\n"
-                + " -o <openid> --openid <openid>  OpenID endpoint from where myproxy information can be gathered.\n"
-                + " -p <password> --password <password>        OpenID passphrase.\n"
-                + " --output <path>                 Path of folder where the retrieved certificates will be stored"
-                + "[default: "
-                + esgPath
-                + "].\n"
-                + " -w --writeall                   Generate all credentials files. The files generated are the same"
-                + " files generated with opts: --credentials --cacertspem --cacertsjks --cacerts --jkskeystore --jcekskeystore\n"
-                + " -b --bootstrap                  To bootstrapping certificates in myproxy service.\n"
-                + " --credentials                   Write user certificate and private key in pem format.\n"
-                + " --cacertspem                    Write trust CA certificates in pem format.\n"
-                + " --cacertsjks                    Write trust CA certificates in JKS keystore format.\n"
-                + " --cacerts                       Write trust CA certificates in a folder.\n"
-                + " --keystorejks                   Write JKS keystore file. This keystore contains certificate,"
-                + " certificate chain and private key of user\n"
-                + " --keystorejceks                 Write JCEKS keystore file. This keystore contains certificate,"
-                + " certificate chain and private key of user\n"
-                + " -d --debug                      Turn debugging info on.\n"
-                + " -h --help                       Show this screen.\n"
-                + " --version                       Show version.\n" + "\n";
+        // load properties file
+        Properties getCredProperties = new Properties();
+        InputStream is = CredentialsProvider.class.getClassLoader()
+                .getResourceAsStream(GET_CRED_PROPERTIES);
+
+        try {
+            getCredProperties.load(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.print("Error reading " + GET_CRED_PROPERTIES + " file");
+        }
+
+        String doc = ResourceBundle.getBundle("docopt")
+                .getString("config");
 
         if (args.length < 1 && !GraphicsEnvironment.isHeadless()) {
             // usage: esgf-getcredentials
 
-            InputStream is = CredentialsProvider.class.getClassLoader()
-                    .getResourceAsStream(ESGF_NODES_PROP);
-
-            Properties esgfNodes = new Properties();
-
-            try {
-                esgfNodes.load(is);
-            } catch (IOException e) {
-                e.printStackTrace();
-                System.err.print("Error reading " + ESGF_NODES_PROP + " file");
-            }
-
             // get nodes property that contains the nodes split by " "
-            String strNodes = esgfNodes.getProperty("getcredentials.nodes");
+            String strNodes = getCredProperties.getProperty("getcredentials.nodes");
             String[] nodes = strNodes.split(" ");
             CredentialsProviderGUI ui = new CredentialsProviderGUI(
                     credentialsProvider, nodes);
@@ -79,7 +53,8 @@ public final class CredentialsProviderCLI {
             // [options]
 
             Docopt docopt = new Docopt(doc);
-            docopt.withVersion("esgf-getcredentials 0.1");
+            docopt.withVersion("esgf-getcredentials "
+                    + getCredProperties.getProperty("getcredentials.version"));
 
             // parse the passed arguments returns a Map<String, Object>
             // except when --version or --help/-h options are passed
@@ -87,6 +62,7 @@ public final class CredentialsProviderCLI {
             String openid = (String) opts.get("--openid");
             String password = (String) opts.get("--password");
             String outputCredPath = (String) opts.get("--output");
+            String newKSPassword = (String) opts.get("--keystorepassw");
             boolean bootstrap = (Boolean) opts.get("--bootstrap");
             boolean debug = (Boolean) opts.get("--debug");
             boolean writeAll = (Boolean) opts.get("--writeall");
@@ -136,6 +112,9 @@ public final class CredentialsProviderCLI {
             if (outputCredPath != null) {
                 credentialsProvider.setCredentialsDirectory(outputCredPath);
             }
+            if (newKSPassword != null) {
+                credentialsProvider.setKeystorePass(newKSPassword);
+            }
             credentialsProvider.setBootstrap(bootstrap);
             credentialsProvider.setWriteCaCertsPem(writeCacert);
             credentialsProvider.setWriteJCEKSKeystore(writeJCEKSkeystore);
@@ -167,7 +146,7 @@ public final class CredentialsProviderCLI {
 
             System.out.println("Success!");
             System.out.println("The follow files have been written in "
-                    + outputCredPath);
+                    + credentialsProvider.getCredentialsDirectory());
 
             if (writeCredentials) {
                 System.out.println("- User certificate and private"

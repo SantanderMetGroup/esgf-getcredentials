@@ -247,8 +247,13 @@ public class CredentialsProviderGUI extends JFrame {
      */
     private JPanel generateWriteOptionPanel() {
 
+        // Main panel
         JPanel mainOptPanel = new JPanel(new BorderLayout());
         mainOptPanel.setBorder(BorderFactory.createTitledBorder("Generate:"));
+
+        // keystore password options
+        final JPanel keypassOptPanel = new JPanel(new GridLayout(2, 1));
+        keypassOptPanel.setVisible(false);
 
         // Write options checkboxes
         JPanel writeOptPanel = new JPanel(new GridLayout(6, 1));
@@ -289,6 +294,16 @@ public class CredentialsProviderGUI extends JFrame {
                             .isSelected());
                 } else if (source == chkCacerts) {
                     credentialsProvider.setWriteCaCertsPem(source.isSelected());
+                }
+
+                // At the end if chkJKS OR chkJCEKS are selected
+                // put on keystore password options. Else if chkJKS AND chkJCEKS
+                // aren't selected put off keystore password options.
+
+                if (chkJKS.isSelected() | chkJCEKS.isSelected()) {
+                    keypassOptPanel.setVisible(true);
+                } else if (!chkJKS.isSelected() && !chkJCEKS.isSelected()) {
+                    keypassOptPanel.setVisible(false);
                 }
             }
         };
@@ -371,8 +386,70 @@ public class CredentialsProviderGUI extends JFrame {
         });
         profilesPanel.add(cBoxProfiles);
 
+        // keystore password options
+        keypassOptPanel
+                .setToolTipText("Options to change the password of the keystores that will be generated");
+        final JRadioButton rbDefaultPass = new JRadioButton("Default passw: changeit");
+        rbDefaultPass.setSelected(true);
+        final JRadioButton rbChangePass = new JRadioButton("Another passw: ");
+        final ButtonGroup groupPass = new ButtonGroup(); // radio button group
+        groupPass.add(rbDefaultPass);
+        groupPass.add(rbChangePass);
+
+        final JButton btChangePass = new JButton("Change password");
+        btChangePass.setEnabled(false);
+        // button listener
+        btChangePass.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent paramActionEvent) {
+                String passw = JOptionPane.showInputDialog("New password:");
+
+                if (!passw.trim().equals("")) {
+                    CredentialsProviderGUI.this.
+                    credentialsProvider.setKeystorePass(passw);
+                    rbChangePass.setText("Another folder: " + passw);
+                }
+            }
+        });
+
+        final JPanel auxDefaultPass = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        auxDefaultPass.add(rbDefaultPass);
+        final JPanel auxAnotherPass = new JPanel(new FlowLayout(
+                FlowLayout.LEFT));
+        auxAnotherPass.add(rbChangePass);
+        auxAnotherPass.add(btChangePass);
+
+        keypassOptPanel.add(auxDefaultPass);
+        keypassOptPanel.add(auxAnotherPass);
+        keypassOptPanel.setBorder(BorderFactory
+                .createTitledBorder("Keystore password options:"));
+
+        // keystore password opts listener
+        ActionListener optsListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent paramActionEvent) {
+                JRadioButton source = (JRadioButton) paramActionEvent
+                        .getSource();
+                if (source == rbDefaultPass) {
+                    credentialsProvider.setKeystorePass("changeit");
+                    btChangePass.setEnabled(false);
+                    rbChangePass.setText("Another passw: ");
+                } else if (source == rbChangePass) {
+                    btChangePass.setEnabled(true);
+                }
+            }
+        };
+
+        rbDefaultPass.addActionListener(optsListener);
+        rbChangePass.addActionListener(optsListener);
+
+        // east panel (Profiles combo box & keystore passw opts)
+        JPanel eastPanel = new JPanel(new BorderLayout());
+        eastPanel.add(profilesPanel, BorderLayout.NORTH);
+        eastPanel.add(keypassOptPanel, BorderLayout.SOUTH);
+
         mainOptPanel.add(writeOptPanel, BorderLayout.WEST);
-        mainOptPanel.add(profilesPanel, BorderLayout.EAST);
+        mainOptPanel.add(eastPanel, BorderLayout.EAST);
 
         return mainOptPanel;
     }
@@ -587,7 +664,7 @@ public class CredentialsProviderGUI extends JFrame {
                         chkBootstrap.setEnabled(true);
                     } else if (source == rbMyProxy206) {
                         credentialsProvider // always bootstrap
-                                .setMyProxyLib(CredentialsProvider.Lib.MYPROXYV206);
+                        .setMyProxyLib(CredentialsProvider.Lib.MYPROXYV206);
                         chkBootstrap.setSelected(true);
                         chkBootstrap.setEnabled(false);
                     }
@@ -652,22 +729,4 @@ public class CredentialsProviderGUI extends JFrame {
         idPanel.add(optsPanel, BorderLayout.SOUTH);
         return idPanel;
     }
-
-    // private JPanel loadingPanel() {
-    // JPanel panel = new JPanel();
-    // BoxLayout layoutMgr = new BoxLayout(panel, BoxLayout.PAGE_AXIS);
-    // panel.setLayout(layoutMgr);
-    //
-    // ClassLoader cldr = this.getClass().getClassLoader();
-    // java.net.URL imageURL = cldr.getResource("ajax-loader.gif");
-    // ImageIcon imageIcon = new ImageIcon(imageURL);
-    // JLabel iconLabel = new JLabel();
-    // iconLabel.setIcon(imageIcon);
-    // imageIcon.setImageObserver(iconLabel);
-    //
-    // JLabel label = new JLabel("Loading...");
-    // panel.add(iconLabel);
-    // panel.add(label);
-    // return panel;
-    // }
 }

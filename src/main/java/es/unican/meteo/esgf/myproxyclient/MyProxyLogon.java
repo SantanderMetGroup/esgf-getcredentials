@@ -40,6 +40,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -578,8 +579,21 @@ public class MyProxyLogon {
             }
             if (j >= 0) {
                 str = str.substring(j);
+
+                // Read String and remove whitespaces
+                Scanner scanner = new Scanner(str);
+                StringBuilder stringBuilder = new StringBuilder();
+
+                while (scanner.hasNextLine()) {
+                    String line = scanner.nextLine();
+                    stringBuilder.append(line.trim());
+                    stringBuilder.append("\n");
+                }
+                scanner.close();
+
                 ByteArrayInputStream localByteArrayInputStream = new ByteArrayInputStream(
-                        str.getBytes());
+                        stringBuilder.toString().getBytes());
+
                 try {
                     X509Certificate localX509Certificate = (X509Certificate) localCertificateFactory
                             .generateCertificate(localByteArrayInputStream);
@@ -645,9 +659,6 @@ public class MyProxyLogon {
         if (str == null) {
             str = System.getProperty("X509_CERT_DIR");
         }
-        if (str == null) {
-            str = System.getProperty("user.home") + "/.globus/certificates";
-        }
         return str;
     }
 
@@ -657,24 +668,9 @@ public class MyProxyLogon {
      * @return directory path string or null if none found
      */
     public static String getExistingTrustRootPath() {
-        String str2 = System.getenv("GLOBUS_LOCATION");
-        if (str2 == null) {
-            str2 = System.getProperty("GLOBUS_LOCATION");
-        }
         String str1 = System.getenv("X509_CERT_DIR");
         if (str1 == null) {
             str1 = System.getProperty("X509_CERT_DIR");
-        }
-        if (str1 == null) {
-            str1 = getDir(System.getProperty("user.home")
-                    + "/.globus/certificates");
-        }
-        if (str1 == null) {
-            str1 = getDir("/etc/grid-security/certificates");
-        }
-        if (str1 == null) {
-            str1 = getDir(str2 + File.separator + "share" + File.separator
-                    + "certificates");
         }
         return str1;
     }
