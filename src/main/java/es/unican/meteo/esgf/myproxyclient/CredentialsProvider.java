@@ -241,7 +241,7 @@ public class CredentialsProvider {
         keystorePass = "changeit";
 
         // set java property to use TLSv1 only
-        System.setProperty("https.protocols", "TLSv1");
+        //System.setProperty("https.protocols", "TLSv1");
 
         LOG.trace("[OUT] ESGFCredentialsProvider");
     }

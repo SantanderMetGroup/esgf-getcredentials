@@ -4,7 +4,7 @@
 	<groupId>getESGFCredentials</groupId>
 	<artifactId>getESGFCredentials</artifactId>
 	<packaging>jar</packaging>
-	<version>0.1.4</version>
+	<version>0.1.6</version>
 	<name>getESGFCredentials</name>
 
 	<build>
